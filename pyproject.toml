@@ -1,0 +1,16 @@
+[build-system]
+requires = ["uv_build>=0.11.7,<0.12"]
+build-backend = "uv_build"
+
+[project]
+name = "motorch"
+version = "0.1.0"
+description = "A barebones Torch-like library for building neural networks."
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+    { name = "Jacomo Corrieri", email = "jacorrieri@gmail.com" }
+]
+dependencies = [
+    "numpy>=2.4.4",
+]
