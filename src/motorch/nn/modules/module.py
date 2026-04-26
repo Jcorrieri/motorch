@@ -23,7 +23,7 @@ class Model():
             layer = getattr(self, attr)
 
             if isinstance(layer, Linear): # only Linear layers have weights
-                initialized = layer.weights and layer.biases
+                initialized = layer in self.learnable
                 if not initialized:
                     self.learnable.append(layer)
 
