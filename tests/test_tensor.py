@@ -89,3 +89,38 @@ def test_add_float_precision():
     b = motorch.tensor([0.1, 0.2, 0.3])
     z = a + b
     assert np.allclose(z.data, [0.2, 0.4, 0.6])
+
+
+# ── dtype cases ────────────────────────────────────────────────────────────────
+
+@pytest.mark.parametrize("dtype", [
+    np.float32,
+    np.float64,
+    np.int32,
+    np.int64,
+])
+def test_tensor_preserves_dtype(dtype):
+    x = motorch.tensor([1, 2, 3], dtype=dtype)
+    assert x.dtype == dtype
+
+
+@pytest.mark.parametrize("dtype", [
+    np.float32,
+    np.float64,
+])
+def test_add_preserves_dtype(dtype):
+    a = motorch.tensor([1.0, 2.0, 3.0], dtype=dtype)
+    b = motorch.tensor([1.0, 2.0, 3.0], dtype=dtype)
+    assert (a + b).dtype == dtype
+
+
+@pytest.mark.parametrize("a_dtype, b_dtype, expected_dtype", [
+    (np.float32, np.float64, np.float64),  # float32 + float64 -> float64
+    (np.int32,   np.float32, np.float64),  # int32 + float32 -> float64 (matches numpy)
+    (np.int32,   np.int64,   np.int64),    # int32 + int64 -> int64
+])
+def test_add_dtype_promotion(a_dtype, b_dtype, expected_dtype):
+    a = motorch.tensor([1, 2, 3], dtype=a_dtype)
+    b = motorch.tensor([1, 2, 3], dtype=b_dtype)
+    assert (a + b).dtype == expected_dtype
+
