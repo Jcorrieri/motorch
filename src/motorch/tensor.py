@@ -18,7 +18,7 @@ def implements(np_function):
         return func
     return decorator
 
-# --- Supported Numpy Functions --- #
+# --- __array_function__ implementations --- #
 
 @implements(np.stack)
 def tensor_stack(tup, **kwargs):
@@ -32,14 +32,6 @@ def tensor_colstack(tup):
 def tensor_concat(tup, **kwargs):
     return Tensor(np.concatenate([t.data for t in tup], **kwargs))
 
-@implements(np.ones)
-def tensor_ones(shape, **kwargs):
-    return Tensor(np.ones(shape, **kwargs))
-
-@implements(np.zeros)
-def tensor_zeros(shape, **kwargs):
-    return Tensor(np.zeros(shape, **kwargs))
-
 @implements(np.ones_like)
 def tensor_ones_like(arr, **kwargs):
     return Tensor(np.ones_like(arr.data, **kwargs))
@@ -47,10 +39,6 @@ def tensor_ones_like(arr, **kwargs):
 @implements(np.zeros_like)
 def tensor_zeros_like(arr, **kwargs):
     return Tensor(np.zeros_like(arr.data, **kwargs))
-
-@implements(np.empty)
-def tensor_empty(shape, **kwargs):
-    return Tensor(np.empty(shape, **kwargs))
 
 @implements(np.empty_like)
 def tensor_empty_like(arr, **kwargs):
@@ -102,7 +90,7 @@ def tensor_mean(arr, **kwargs):
 
 
 class Tensor(NDArrayOperatorsMixin):
-    def __init__(self, data, requires_grad=False, **kwargs) -> None:
+    def __init__(self, data, requires_grad=True, **kwargs) -> None:
         self.data = np.array(data, **kwargs) # always copies data
         self.grad = None
         self.requires_grad = requires_grad
@@ -214,8 +202,18 @@ class Tensor(NDArrayOperatorsMixin):
     def T(self):
         return Tensor(self.data.T)
 
+# --- Standalone Functions --- #
 
 def tensor(data, dtype=None, requires_grad=False):
     """Factory function similar to torch.tensor()"""
     return Tensor(data, dtype=dtype, requires_grad=requires_grad)
+
+def tensor_ones(shape, **kwargs):
+    return Tensor(np.ones(shape, **kwargs))
+
+def tensor_zeros(shape, **kwargs):
+    return Tensor(np.zeros(shape, **kwargs))
+
+def tensor_empty(shape, **kwargs):
+    return Tensor(np.empty(shape, **kwargs))
 

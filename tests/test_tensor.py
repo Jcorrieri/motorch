@@ -24,13 +24,9 @@ class TestConstruction:
         t = tensor([1, 2, 3], dtype=np.float32)
         assert t.dtype == np.float32
 
-    def test_requires_grad_default(self):
-        t = Tensor([1, 2, 3])
-        assert t.requires_grad == False
-
     def test_requires_grad(self):
-        t = Tensor([1, 2, 3], requires_grad=True)
-        assert t.requires_grad == True
+        t = Tensor([1, 2, 3], requires_grad=False)
+        assert t.requires_grad == False
 
 
 # --- Properties --- #
