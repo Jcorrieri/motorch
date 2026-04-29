@@ -5,7 +5,6 @@ References:
     - https://numpy.org/doc/stable/reference/generated/numpy.ndarray
     - https://numpy.org/doc/stable/user/basics.dispatch.html
 """
-
 import numpy as np
 from numpy.lib.mixins import NDArrayOperatorsMixin
 
@@ -62,12 +61,12 @@ def tensor_transpose(arr, axes=None):
     return Tensor(np.transpose(arr.data, axes))
 
 @implements(np.reshape)
-def tensor_reshape(arr, **kwargs):
-    return Tensor(np.reshape(arr.data, **kwargs))
+def tensor_reshape(arr, shape, **kwargs):
+    return Tensor(np.reshape(arr.data, shape, **kwargs))
 
 @implements(np.where)
 def tensor_where(cond, x, y):
-    return Tensor(np.where(cond, x, y))
+    return Tensor(np.where(cond.data, x, y))
 
 @implements(np.clip)
 def tensor_clip(a, *args, **kwargs):
@@ -166,22 +165,25 @@ class Tensor(NDArrayOperatorsMixin):
 
     def sum(self, **kwargs):
         "Implementation of np.sum for motorch.Tensor objects"
-        return np.sum(self, **kwargs)
+        return Tensor(np.sum(self, **kwargs))
 
     def mean(self, **kwargs):
         "Implementation of np.mean for motorch.Tensor objects"
-        return np.mean(self, **kwargs)
+        return Tensor(np.mean(self, **kwargs))
 
     def transpose(self, axes=None):
         """Returns a tensor with axes transposed."""
-        return np.transpose(self, axes)
+        return Tensor(np.transpose(self, axes))
 
-    def reshape(self, shape, **kwargs):
+    def reshape(self, *args, **kwargs):
         """Implementation of np.reshape for motorch.tensor objects."""
-        return np.reshape(self, shape, **kwargs)
+        return Tensor(np.reshape(self, args if len(args) > 1 else args[0], **kwargs))
 
     def item(self, *args):
         return self.data.item(*args)
+
+    def numpy(self) -> np.ndarray:
+        return self.data
 
     # --- Properties --- #
 

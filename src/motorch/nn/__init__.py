@@ -9,7 +9,6 @@ from .modules import (
     Model,
     LogisticLoss,
     Sgn,
-    AltSigmoid,
     Sigmoid,
 )
 
@@ -19,6 +18,5 @@ __all__ = [
     "LogisticLoss",
     "Sgn",
     "Sigmoid",
-    "AltSigmoid",
     "functional"
 ]

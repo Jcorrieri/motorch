@@ -20,15 +20,3 @@ class Sigmoid():
 
     def _grad(self, x):
         return sigmoid_derivative(x)
-
-
-class AltSigmoid():
-    def __call__(self, x):
-        self.grad = self._grad(x)
-        return 2 * sigmoid(x) - 1
-
-    def __str__(self):
-        return "Alternate Sigmoid: 2 * sigmoid(x) - 1\n"
-
-    def _grad(self, x):
-        return 2 * sigmoid_derivative(x)
