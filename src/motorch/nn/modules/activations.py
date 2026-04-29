@@ -1,11 +1,10 @@
-import numpy as np
-
+import motorch as mo
 from motorch.nn.functional import sigmoid, sigmoid_derivative
 
 
 class Sgn():
     def __call__(self, x):
-        return np.where(x >= 0, 1, -1)
+        return mo.where(x >= 0, 1, -1)
 
     def __str__(self):
         return "Vector Sign Function: 1 if x >= 0, else -1\n"

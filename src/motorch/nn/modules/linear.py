@@ -1,4 +1,4 @@
-import numpy as np
+import motorch as mo
 import textwrap
 
 
@@ -6,8 +6,8 @@ class Linear():
     def __init__(self, num_features, num_neurons):
         self.num_features = num_features
         self.num_neurons = num_neurons
-        self.weights = np.empty(shape=(num_features, num_neurons))
-        self.biases = np.empty(shape=(1, num_neurons))
+        self.weights = mo.empty(shape=(num_features, num_neurons))
+        self.biases = mo.empty(shape=(1, num_neurons))
 
     def __call__(self, x):
         return self.forward(x)
@@ -20,7 +20,7 @@ class Linear():
         """)
         return string
 
-    def set_weights(self, weights: np.ndarray, biases: np.ndarray):
+    def set_weights(self, weights: mo.Tensor, biases: mo.Tensor):
         self.weights = weights
         self.biases = biases
 

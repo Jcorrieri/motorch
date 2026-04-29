@@ -15,20 +15,91 @@ HANDLED_FUNCTIONS = {}
 def implements(np_function):
     "Register an __array_function__ implementation for DiagonalArray objects."
     def decorator(func):
-       HANDLED_FUNCTIONS[np_function] = func
-       return func
+        HANDLED_FUNCTIONS[np_function] = func
+        return func
     return decorator
 
-def reduction(np_func):
-    def method(self, **kwargs):
-        # out covers np.mean(.., out=...)
-        if "out" in kwargs and isinstance(kwargs["out"], Tensor):
-            kwargs["out"] = kwargs["out"].data
-        result = np_func(self.data, **kwargs)
-        if isinstance(result, np.ndarray):
-            return tensor(result)
-        return result  # scalars when no axis specified
-    return method
+# --- Static numpy functions --- #
+
+@implements(np.stack)
+def tensor_stack(tup, **kwargs):
+    return Tensor(np.stack([t.data for t in tup], **kwargs))
+
+@implements(np.column_stack)
+def tensor_colstack(tup):
+    return Tensor(np.column_stack([t.data for t in tup]))
+
+@implements(np.concatenate)
+def tensor_concat(tup, **kwargs):
+    return Tensor(np.concatenate([t.data for t in tup], **kwargs))
+
+@implements(np.ones)
+def tensor_ones(shape, **kwargs):
+    return Tensor(np.ones(shape, **kwargs))
+
+@implements(np.zeros)
+def tensor_zeros(shape, **kwargs):
+    return Tensor(np.zeros(shape, **kwargs))
+
+@implements(np.ones_like)
+def tensor_ones_like(arr, **kwargs):
+    return Tensor(np.ones_like(arr.data, **kwargs))
+
+@implements(np.zeros_like)
+def tensor_zeros_like(arr, **kwargs):
+    return Tensor(np.zeros_like(arr.data, **kwargs))
+
+@implements(np.empty)
+def tensor_empty(shape, **kwargs):
+    return Tensor(np.empty(shape, **kwargs))
+
+@implements(np.empty_like)
+def tensor_empty_like(arr, **kwargs):
+    return Tensor(np.empty_like(arr.data, **kwargs))
+
+@implements(np.transpose)
+def tensor_transpose(arr, axes=None):
+    return Tensor(np.transpose(arr.data, axes))
+
+@implements(np.reshape)
+def tensor_reshape(arr, **kwargs):
+    return Tensor(np.reshape(arr.data, **kwargs))
+
+@implements(np.where)
+def tensor_where(cond, x, y):
+    return Tensor(np.where(cond, x, y))
+
+@implements(np.clip)
+def tensor_clip(a, *args, **kwargs):
+    return Tensor(np.clip(a.data, *args, **kwargs))
+
+@implements(np.exp)
+def tensor_exp(arr, **kwargs):
+    result = np.exp(arr.data, **kwargs)
+    if np.ndim(result) == 0:
+        return result.item()  # return plain scalar
+    return Tensor(result)
+
+@implements(np.log1p)
+def tensor_log1p(arr, **kwargs):
+    result = np.log1p(arr.data, **kwargs)
+    if np.ndim(result) == 0:
+        return result.item()  # return plain scalar
+    return Tensor(result)
+
+@implements(np.sum)
+def tensor_sum(arr, **kwargs):
+    result = np.sum(arr.data, **kwargs)
+    if np.ndim(result) == 0:
+        return result.item()  # return plain scalar
+    return Tensor(result)
+
+@implements(np.mean)
+def tensor_mean(arr, **kwargs):
+    result = np.mean(arr.data, **kwargs)
+    if np.ndim(result) == 0:
+        return result.item()  # return plain scalar
+    return Tensor(result)
 
 
 class Tensor(NDArrayOperatorsMixin):
@@ -44,6 +115,20 @@ class Tensor(NDArrayOperatorsMixin):
 
     def __repr__(self) -> str:
         return f"MoTensor({self.data})"
+
+    def __iter__(self):
+        for item in self.data:
+            yield Tensor(item)
+
+    def __getitem__(self, key):
+        """Allows for array slicing"""
+        return Tensor(self.data[key])
+
+    def __setitem__(self, key, value):
+        """Allows for setting elements via slicing"""
+        if isinstance(value, Tensor):
+           value = value.data 
+        self.data[key] = value
 
     # for np.asarray(...)
     def __array__(self, dtype=None, copy=None):
@@ -64,7 +149,7 @@ class Tensor(NDArrayOperatorsMixin):
         ]
         result = getattr(ufunc, method)(*unwrapped, **kwargs)
         if isinstance(result, np.ndarray):
-            return tensor(result)
+            return Tensor(result)
         return result  # scalars, None, etc.
 
     # handles mean, sum, etc.
@@ -72,46 +157,31 @@ class Tensor(NDArrayOperatorsMixin):
         if func not in HANDLED_FUNCTIONS:
             return NotImplemented
         # Note: this allows subclasses that don't override
-        # __array_function__ to handle DiagonalArray objects.
+        # __array_function__ to handle Tensor objects.
         if not all(issubclass(t, self.__class__) for t in types):
             return NotImplemented
         return HANDLED_FUNCTIONS[func](*args, **kwargs)
 
-    # --- NumPy Function Support --- #
+    # --- NumPy Function Support (e.g. np.mean, np.exp) --- #
 
-    @implements(np.sum)
-    def tensor_sum(arr, **kwargs):
+    def sum(self, **kwargs):
         "Implementation of np.sum for motorch.Tensor objects"
-        return np.sum(arr.data, **kwargs)
+        return np.sum(self, **kwargs)
 
-    @implements(np.mean)
-    def tensor_mean(arr, **kwargs):
+    def mean(self, **kwargs):
         "Implementation of np.mean for motorch.Tensor objects"
-        return np.mean(arr.data, **kwargs)
+        return np.mean(self, **kwargs)
 
-    @implements(np.transpose)
-    def tensor_transpose(arr, axes=None):
+    def transpose(self, axes=None):
         """Returns a tensor with axes transposed."""
-        return Tensor(np.transpose(arr.data, axes))
+        return np.transpose(self, axes)
 
-    @implements(np.reshape)
-    def tensor_reshape(arr, **kwargs):
+    def reshape(self, shape, **kwargs):
         """Implementation of np.reshape for motorch.tensor objects."""
-        return Tensor(np.reshape(arr.data, **kwargs))
+        return np.reshape(self, shape, **kwargs)
 
-    def T(self):
-        """Implementation of ndarry.T for motorch tensors."""
-        return Tensor(self.data.T)
-
-    # --- Intrinsic Functions --- #
-
-    mean = reduction(np.mean)
-    sum  = reduction(np.sum)
-    std  = reduction(np.std)
-    min  = reduction(np.min)
-    max  = reduction(np.max)
-    transpose = reduction(np.transpose)
-    reshape = reduction(np.reshape)
+    def item(self, *args):
+        return self.data.item(*args)
 
     # --- Properties --- #
 
@@ -127,6 +197,10 @@ class Tensor(NDArrayOperatorsMixin):
     @property
     def ndim(self):
         return self.data.ndim
+
+    @property
+    def T(self):
+        return Tensor(self.data.T)
 
 
 def tensor(data, dtype=None, requires_grad=False):
