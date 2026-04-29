@@ -12,13 +12,13 @@ from numpy.lib.mixins import NDArrayOperatorsMixin
 HANDLED_FUNCTIONS = {}
 
 def implements(np_function):
-    "Register an __array_function__ implementation for DiagonalArray objects."
+    "Register an __array_function__ implementation for MoTensor objects."
     def decorator(func):
         HANDLED_FUNCTIONS[np_function] = func
         return func
     return decorator
 
-# --- Static numpy functions --- #
+# --- Supported Numpy Functions --- #
 
 @implements(np.stack)
 def tensor_stack(tup, **kwargs):
@@ -146,12 +146,18 @@ class Tensor(NDArrayOperatorsMixin):
             input.data if isinstance(input, Tensor) else input
             for input in inputs
         ]
+        # Properly handle in-place operations (e.g. +=, -=)
+        if 'out' in kwargs:
+            kwargs['out'] = tuple(
+                o.data if isinstance(o, Tensor) else o
+                for o in kwargs['out']
+            )
         result = getattr(ufunc, method)(*unwrapped, **kwargs)
         if isinstance(result, np.ndarray):
             return Tensor(result)
         return result  # scalars, None, etc.
 
-    # handles mean, sum, etc.
+    # Allows for overriding np.mean, np.sum, etc. as motorch.mean, motorch.sum
     def __array_function__(self, func, types, args, kwargs):
         if func not in HANDLED_FUNCTIONS:
             return NotImplemented
@@ -161,7 +167,7 @@ class Tensor(NDArrayOperatorsMixin):
             return NotImplemented
         return HANDLED_FUNCTIONS[func](*args, **kwargs)
 
-    # --- NumPy Function Support (e.g. np.mean, np.exp) --- #
+    # --- Intrinsic Numpy Function Support (e.g. Tensor.mean(), Tensor.exp()) --- #
 
     def sum(self, **kwargs):
         "Implementation of np.sum for motorch.Tensor objects"
@@ -177,7 +183,7 @@ class Tensor(NDArrayOperatorsMixin):
 
     def reshape(self, *args, **kwargs):
         """Implementation of np.reshape for motorch.tensor objects."""
-        return Tensor(np.reshape(self, args if len(args) > 1 else args[0], **kwargs))
+        return Tensor(np.reshape(self, args, **kwargs))
 
     def item(self, *args):
         return self.data.item(*args)
@@ -189,7 +195,6 @@ class Tensor(NDArrayOperatorsMixin):
 
     @property
     def shape(self):
-        """Returns the shape of the tensor as a tuple."""
         return self.data.shape
 
     @property
