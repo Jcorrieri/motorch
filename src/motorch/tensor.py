@@ -153,6 +153,11 @@ class Tensor(NDArrayOperatorsMixin):
                 for o in kwargs['out']
             )
         result = getattr(ufunc, method)(*unwrapped, **kwargs)
+
+        # In-place op (numpy already mutated self.data, return self)
+        if 'out' in kwargs and kwargs['out'][0] is self.data:
+            return self
+
         if isinstance(result, np.ndarray):
             return Tensor(result)
         return result  # scalars, None, etc.
