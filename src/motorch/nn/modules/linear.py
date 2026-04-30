@@ -13,9 +13,6 @@ class Linear(Module):
         self.weight = mo.empty(shape=(in_features, out_features))
         self.bias = mo.empty(shape=(1, out_features))
 
-    def __call__(self, x):
-        return self.forward(x)
-
     def __str__(self):
         string = textwrap.dedent(
             f"""Linear(in_features={self.in_features}, out_features={self.out_features})
