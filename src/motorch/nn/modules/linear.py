@@ -1,7 +1,7 @@
 import textwrap
 
 import motorch as mo
-from motorch.nn.modules import Module
+from .module import Module
 import motorch.nn.functional as F
 
 

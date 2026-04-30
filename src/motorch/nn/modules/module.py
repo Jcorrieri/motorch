@@ -3,7 +3,7 @@ Ref: https://github.com/pytorch/pytorch/blob/main/torch/nn/modules/module.py#L40
 """
 from typing import Any, Union
 
-from motorch.nn import Parameter
+from ..parameter import Parameter
 from motorch import Tensor
 
 
@@ -43,8 +43,8 @@ class Module():
             f"'{type(self).__name__}' object has no attribute '{name}'"
         )
 
-    def __call__(self, x):
-        return self.forward(x)
+    def __call__(self, *args, **kwargs):
+        return self.forward(*args, **kwargs)
 
     def __str__(self):
         string = "Model:\n-----------\n"

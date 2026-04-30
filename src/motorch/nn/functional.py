@@ -4,15 +4,24 @@ explicit implementations are defined here, in Python.
 """
 import motorch as mo
 
+
 # --- Activations --- # 
 
 def sigmoid(x):
     x_clipped = mo.clip(x, -700, 700) # to avoid numerical instability
     return 1 / (1 + mo.exp(-x_clipped))
 
-def sigmoid_derivative(x):
+def sigmoid_grad(x):
     return sigmoid(x) * (1 - sigmoid(x))
 
+
+# --- Loss Functions --- #
+
+def logloss(logits, labels):
+    return mo.mean(mo.log1p(mo.exp(-logits * labels)))
+
+def logloss_grad(logits, labels):
+    return mo.tensor(-labels * sigmoid(-labels * logits) / len(labels))
 
 # --- Layers --- #
 

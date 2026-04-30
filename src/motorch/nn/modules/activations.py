@@ -1,22 +1,23 @@
 import motorch as mo
-from motorch.nn.functional import sigmoid, sigmoid_derivative
+from .module import Module
+import motorch.nn.functional as F
 
 
-class Sgn():
-    def __call__(self, x):
+class Sgn(Module):
+    def forward(self, x):
         return mo.where(x >= 0, 1, -1)
 
     def __str__(self):
-        return "Vector Sign Function: 1 if x >= 0, else -1\n"
+        return "Sgn()"
 
 
-class Sigmoid():
-    def __call__(self, x):
+class Sigmoid(Module):
+    def forward(self, x):
         self.grad = self._grad(x)
-        return sigmoid(x)
+        return F.sigmoid(x)
 
     def __str__(self) -> str:
-        return "Sigmoid Function"
+        return "Sigmoid()"
 
     def _grad(self, x):
-        return sigmoid_derivative(x)
+        return F.sigmoid_grad(x)
