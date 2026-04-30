@@ -1,7 +1,5 @@
 """
 Ref: https://github.com/pytorch/pytorch/blob/main/torch/nn/parameter.py
-For simplicity, this will expect `data` to be of type Tensor and non-tensor
-objects will not be supported (yes, even numpy arrays).
 """
 import motorch as mo
 
