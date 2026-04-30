@@ -3,7 +3,7 @@ Core package for MoTorch modules, which is loosely based on the PyTorch package 
 https://github.com/pytorch/pytorch/blob/v2.11.0/torch/nn/modules
 """
 
-from .module import Model
+from .module import Module
 from .linear import Linear
 from .loss import LogisticLoss
 from .activations import (
@@ -12,7 +12,7 @@ from .activations import (
 )
 
 __all__ = [
-    "Model",
+    "Module",
     "Linear",
     "LogisticLoss",
     "Sgn",

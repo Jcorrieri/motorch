@@ -202,6 +202,7 @@ class Tensor(NDArrayOperatorsMixin):
     def T(self):
         return Tensor(self.data.T)
 
+
 # --- Standalone Functions --- #
 
 def tensor(data, dtype=None, requires_grad=False):

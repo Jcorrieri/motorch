@@ -1,48 +1,38 @@
-import motorch as mo
 import textwrap
 
+import motorch as mo
+from motorch.nn.modules import Module
+import motorch.nn.functional as F
 
-class Linear():
-    def __init__(self, num_features, num_neurons):
-        self.num_features = num_features
-        self.num_neurons = num_neurons
-        self.weights = mo.empty(shape=(num_features, num_neurons))
-        self.biases = mo.empty(shape=(1, num_neurons))
+
+class Linear(Module):
+    def __init__(self, in_features, out_features):
+        super().__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.weight = mo.empty(shape=(in_features, out_features))
+        self.bias = mo.empty(shape=(1, out_features))
 
     def __call__(self, x):
         return self.forward(x)
 
     def __str__(self):
         string = textwrap.dedent(
-            f"""Linear(num_features={self.num_features}, num_neurons={self.num_neurons})
-          Weights: {", ".join([str(weight) for weight in self.weights.T])}
-          Biases: {", ".join([str(bias) for bias in self.biases.T])}
+            f"""Linear(in_features={self.in_features}, out_features={self.out_features})
+          Weights: {", ".join([str(weight) for weight in self.weight.T])}
+          Biases: {", ".join([str(bias) for bias in self.bias.T])}
         """)
         return string
 
-    def set_weights(self, weights: mo.Tensor, biases: mo.Tensor):
-        self.weights = weights
-        self.biases = biases
-
-        expected_shape = (self.num_features, self.num_neurons)
-
-        assert self.weights.shape == expected_shape,\
-        f"Expected weights.shape = {expected_shape}, got {self.weights.shape}."
-
-        expected_shape = (1, self.num_neurons)
-
-        assert self.biases.shape == expected_shape,\
-        f"Expected biases.shape = {expected_shape}, got {self.biases.shape}."
-
     def forward(self, x):
-        assert self.weights is not None, "Weights must be uninitialized."
-
-        expected_shape = (self.weights.shape)
-
-        assert x.shape[-1] == expected_shape[0],\
-        f"Expected x.shape = (m, {expected_shape[0]}), got {x.shape}."
-
         self.x = x
 
-        return x @ self.weights + self.biases
+        assert self.weight.shape == (self.in_features, self.out_features),\
+            f"Unexpected weight shape {self.weight.shape}, expected\
+            {(self.in_features, self.out_features)}."
+
+        assert self.bias.shape == (1, self.out_features), \
+            f"Unexpected bias shape {self.bias.shape}, expected {(1, self.out_features)}."
+
+        return F.linear(x, self.weight, self.bias)
 
