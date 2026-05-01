@@ -1,8 +1,7 @@
-import textwrap
-
 import motorch as mo
-from .module import Module
 import motorch.nn.functional as F
+from motorch.nn.parameter import Parameter
+from .module import Module
 
 
 class Linear(Module):
@@ -10,16 +9,8 @@ class Linear(Module):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
-        self.weight = mo.empty(shape=(in_features, out_features))
-        self.bias = mo.empty(shape=(1, out_features))
-
-    def __str__(self):
-        string = textwrap.dedent(
-            f"""Linear(in_features={self.in_features}, out_features={self.out_features})
-          Weights: {", ".join([str(weight) for weight in self.weight.T])}
-          Biases: {", ".join([str(bias) for bias in self.bias.T])}
-        """)
-        return string
+        self.weight = Parameter(mo.empty(shape=(in_features, out_features)))
+        self.bias = Parameter(mo.empty(shape=(1, out_features)))
 
     def forward(self, x):
         self.x = x
@@ -33,3 +24,8 @@ class Linear(Module):
 
         return F.linear(x, self.weight, self.bias)
 
+    def extra_repr(self) -> str:
+        """
+        Return the extra representation of the module.
+        """
+        return f"in_features={self.in_features}, out_features={self.out_features}, bias={self.bias is not None}"

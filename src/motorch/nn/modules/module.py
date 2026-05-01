@@ -3,8 +3,9 @@ Ref: https://github.com/pytorch/pytorch/blob/main/torch/nn/modules/module.py#L40
 """
 from typing import Any, Union
 
-from ..parameter import Parameter
+from motorch.nn.parameter import Parameter
 from motorch import Tensor
+from motorch.utils import format
 
 
 class Module():
@@ -46,20 +47,16 @@ class Module():
     def __call__(self, *args, **kwargs):
         return self.forward(*args, **kwargs)
 
-    def __str__(self):
-        string = "Model:\n-----------\n"
-
-        for module, value in getattr(self, "_modules").items():
-            string += f"{module}: {str(value)}"
-
-        return string
-
-    def parameters(self, recurse=True):
-        for param in getattr(self, "_parameters").values():
-            yield param
+    def named_parameters(self, recurse=True):
+        for name, param in getattr(self, "_parameters").items():
+            yield name, param
         if recurse:
             for module in getattr(self, "_modules").values():
-                yield from module.parameters()
+                yield from module.named_parameters()
+
+    def parameters(self, recurse=True):
+        for _, param in self.named_parameters(recurse=recurse):
+            yield param
 
     def train(self, mode=True):
         self.training = mode
@@ -79,3 +76,43 @@ class Module():
 
     def backwards(self):
         pass
+
+    # NOTE: I stole most of the following from PyTorch directly
+    def _get_name(self):
+        return self.__class__.__name__
+
+    def extra_repr(self) -> str:
+        r"""Return the extra representation of the module.
+
+        To print customized extra information, you should re-implement
+        this method in your own modules. Both single-line and multi-line
+        strings are acceptable.
+        """
+        return ""
+
+    def __repr__(self) -> str:
+        # We treat the extra repr like the sub-module, one item per line
+        extra_lines = []
+        extra_repr = self.extra_repr()
+        # empty string will be split into list ['']
+        if extra_repr:
+            extra_lines = extra_repr.split("\n")
+        child_lines = []
+        for key, module in getattr(self, "_modules").items():
+            mod_str = repr(module)
+            mod_str = format._addindent(mod_str, 2)
+            child_lines.append("(" + key + "): " + mod_str)
+        lines = extra_lines + child_lines
+
+        main_str = self._get_name() + "("
+        if lines:
+            # simple one-liner info, which most builtin Modules will use
+            if len(extra_lines) == 1 and not child_lines:
+                main_str += extra_lines[0]
+            else:
+                main_str += "\n  " + "\n  ".join(lines) + "\n"
+
+        main_str += ")"
+        return main_str
+
+    

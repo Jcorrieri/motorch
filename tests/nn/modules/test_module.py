@@ -256,26 +256,7 @@ class TestForward:
         np.testing.assert_array_equal(result.data, np.array([0.0, 0.0, 1.0, 2.0]))
 
 
-# --- __str__ --- #
-
-class TestStr:
-    def test_str_contains_model(self):
-        m = NestedModule()
-        assert "Model:" in str(m)
-
-    def test_str_contains_layer_names(self):
-        m = NestedModule()
-        s = str(m)
-        assert "layer1" in s
-        assert "layer2" in s
-
-    def test_str_no_modules(self):
-        m = SimpleModule()
-        s = str(m)
-        assert "Model:" in s
-
-
-# --- Composition --- #
+# --- __# --- Composition --- #
 
 class TestComposition:
     def test_nested_modules_registered(self):

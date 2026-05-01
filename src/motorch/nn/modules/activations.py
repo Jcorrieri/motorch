@@ -7,17 +7,11 @@ class Sgn(Module):
     def forward(self, x):
         return mo.where(x >= 0, 1, -1)
 
-    def __str__(self):
-        return "Sgn()"
-
 
 class Sigmoid(Module):
     def forward(self, x):
         self.grad = self._grad(x)
         return F.sigmoid(x)
-
-    def __str__(self) -> str:
-        return "Sigmoid()"
 
     def _grad(self, x):
         return F.sigmoid_grad(x)

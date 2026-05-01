@@ -101,7 +101,7 @@ class Tensor(NDArrayOperatorsMixin):
         return len(self.data)
 
     def __repr__(self) -> str:
-        return f"MoTensor({self.data})"
+        return f"Tensor({self.data})"
 
     def __iter__(self):
         for item in self.data:

@@ -3,6 +3,7 @@ Functional components for MoTorch. PyTorch delegates these to underlying C logic
 explicit implementations are defined here, in Python.
 """
 import motorch as mo
+from motorch import Tensor
 
 
 # --- Activations --- # 
@@ -26,7 +27,7 @@ def logloss_grad(logits, labels):
 # --- Layers --- #
 
 def linear(x, weight, bias):
-    if not isinstance(x, mo.Tensor):
+    if not isinstance(x, Tensor):
         raise ValueError("Input must be of type motorch.Tensor")
 
     assert x.shape[-1] == weight.shape[0],\

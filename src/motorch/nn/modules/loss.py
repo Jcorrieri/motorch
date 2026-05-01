@@ -8,9 +8,6 @@ class LogisticLoss(Module):
         self.grad = self._grad(logits, labels)
         return F.logloss(labels, logits)
 
-    def __str__(self):
-        return "LogisticLoss()"
-
     def _grad(self, logits, labels):
         return F.logloss_grad(logits, labels)
 
