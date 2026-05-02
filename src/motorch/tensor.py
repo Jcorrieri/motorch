@@ -88,6 +88,13 @@ def tensor_mean(arr, **kwargs):
         return result.item()  # return plain scalar
     return Tensor(result)
 
+@implements(np.sqrt)
+def tensor_sqrt(arr, **kwargs):
+    result = np.sqrt(arr.data, **kwargs)
+    if np.ndim(result) == 0:
+        return result.item()
+    return Tensor(result)
+
 
 class Tensor(NDArrayOperatorsMixin):
     def __init__(self, data, requires_grad=True, **kwargs) -> None:
