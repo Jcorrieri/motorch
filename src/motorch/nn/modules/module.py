@@ -70,10 +70,6 @@ class Module():
     def forward(self, *inputs, **kwargs):
         raise NotImplementedError
     
-    # TODO: Implement
-    def zero_grads(self):
-        pass
-
     def backwards(self):
         pass
 
