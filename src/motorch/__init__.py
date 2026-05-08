@@ -1,5 +1,8 @@
 """
-MoTorch - a torch-like deep learning library.
+MoTorch: a minimal torch-like deep learning library.
+
+The top-level package exports the core Tensor container and a small set of
+NumPy-compatible tensor creation and manipulation utilities.
 """
 
 from .tensor import (

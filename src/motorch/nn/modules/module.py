@@ -9,6 +9,13 @@ from motorch.utils import format
 
 
 class Module():
+    """Base class for neural network modules.
+
+    Modules can contain both parameters and child modules. They support
+    recursive ``train``/``eval`` mode propagation and provide hooks for
+    custom forward computation and representation.
+    """
+
     def __init__(self):
         # Bypass Module.__setattr__() which has special use
         super().__setattr__("training", True)
@@ -17,6 +24,11 @@ class Module():
 
     # For distinguishing between trainable parameters and other attributes
     def __setattr__(self, name: str, value: Any, /) -> None:
+        """Register Parameters and child Modules automatically.
+
+        Parameters assigned to module attributes are stored in internal
+        dictionaries for later traversal and optimization.
+        """
         if isinstance(value, Parameter):
             params = self.__dict__.get("_parameters", {})
             params[name] = value
@@ -28,6 +40,7 @@ class Module():
 
     # Needed to support __getattr__ override
     def __getattr__(self, name: str) -> Union[Tensor, "Module"]:
+        """Retrieve registered parameters, buffers, or child modules."""
         if "_parameters" in self.__dict__:
             _parameters = self.__dict__["_parameters"]
             if name in _parameters:
@@ -48,6 +61,10 @@ class Module():
         return self.forward(*args, **kwargs)
 
     def named_parameters(self, recurse=True):
+        """Yield module parameter name, parameter pairs.
+
+        When ``recurse`` is True, this method traverses child modules recursively.
+        """
         for name, param in getattr(self, "_parameters").items():
             yield name, param
         if recurse:
@@ -59,12 +76,14 @@ class Module():
             yield param
 
     def train(self, mode=True):
+        """Set the module to training mode and propagate to child modules."""
         self.training = mode
         for module in getattr(self, "_modules").values():
             module.train(mode)   # propagates to all children
         return self
 
     def eval(self):
+        """Set the module to evaluation mode."""
         return self.train(False)
 
     def forward(self, *inputs, **kwargs):

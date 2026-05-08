@@ -1,3 +1,5 @@
+"""Linear module implementation for MoTorch."""
+
 import motorch as mo
 import motorch.nn.functional as F
 from motorch.nn.parameter import Parameter
@@ -5,6 +7,8 @@ from .module import Module
 
 
 class Linear(Module):
+    """A fully connected layer with weight and bias parameters."""
+
     def __init__(self, in_features, out_features):
         super().__init__()
         self.in_features = in_features
@@ -13,6 +17,11 @@ class Linear(Module):
         self.bias = Parameter(mo.empty(shape=(1, out_features)))
 
     def forward(self, x):
+        """Compute the layer output for input ``x``.
+
+        This method validates the expected shapes for the weight and bias tensors
+        before applying the linear transformation.
+        """
         self.x = x
 
         assert self.weight.shape == (self.in_features, self.out_features),\

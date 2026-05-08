@@ -1,5 +1,7 @@
-"""
-The MoTorch Tensor class is a custom ndarray container.
+"""Core Tensor implementation and NumPy interoperability layer.
+
+The :mod:`motorch.tensor` module defines the :class:`Tensor` class and helper
+functions that wrap NumPy operations while preserving the custom Tensor type.
 
 References:
     - https://numpy.org/doc/stable/reference/generated/numpy.ndarray
@@ -97,6 +99,14 @@ def tensor_sqrt(arr, **kwargs):
 
 
 class Tensor(NDArrayOperatorsMixin):
+    """A thin Tensor wrapper around a NumPy ndarray.
+
+    This class stores the underlying array in ``self.data`` and exposes
+    NumPy interoperability through ``__array__``, ``__array_function__`` and
+    ``__array_ufunc__`` hooks. It also carries optional gradient tracking
+    metadata for use in simple neural network computations.
+    """
+
     def __init__(self, data, requires_grad=True, **kwargs) -> None:
         self.data = np.array(data, **kwargs) # always copies data
         self.grad = None
@@ -115,11 +125,11 @@ class Tensor(NDArrayOperatorsMixin):
             yield Tensor(item)
 
     def __getitem__(self, key):
-        """Allows for array slicing"""
+        """Return a sliced Tensor view of the underlying data."""
         return Tensor(self.data[key])
 
     def __setitem__(self, key, value):
-        """Allows for setting elements via slicing"""
+        """Set array values using standard NumPy-style indexing."""
         if isinstance(value, Tensor):
            value = value.data 
         self.data[key] = value
@@ -213,15 +223,24 @@ class Tensor(NDArrayOperatorsMixin):
 # --- Standalone Functions --- #
 
 def tensor(data, dtype=None, requires_grad=False):
-    """Factory function similar to torch.tensor()"""
+    """Create a new ``Tensor`` from array-like data.
+
+    Parameters:
+        data: Array-like input data.
+        dtype: Optional NumPy dtype for the created array.
+        requires_grad: Whether gradient tracking should be enabled.
+    """
     return Tensor(data, dtype=dtype, requires_grad=requires_grad)
 
 def tensor_ones(shape, **kwargs):
+    """Create a ``Tensor`` filled with ones."""
     return Tensor(np.ones(shape, **kwargs))
 
 def tensor_zeros(shape, **kwargs):
+    """Create a ``Tensor`` filled with zeros."""
     return Tensor(np.zeros(shape, **kwargs))
 
 def tensor_empty(shape, **kwargs):
+    """Create an uninitialized ``Tensor`` of the given shape."""
     return Tensor(np.empty(shape, **kwargs))
 

@@ -6,8 +6,10 @@ from motorch import Tensor
 
 
 class Parameter(Tensor):
+    """A tensor subclass that represents a learnable model parameter."""
+
     def __init__(self, data, requires_grad=True, **kwargs):
-        """Since we do not have underlying C logic, we can use __init__ directly."""
+        """Initialize a :class:`Parameter` with optional gradient tracking."""
         super().__init__(data, requires_grad, **kwargs)
 
     def __repr__(self):
