@@ -497,3 +497,129 @@ class TestNodeCreation:
         version_before = a._version
         a += 1.0
         assert a._version == version_before
+
+
+# --- Gradient computation --- #
+
+class TestGradients:
+    # -- Addition -- #
+
+    def test_add_grad_left(self):
+        x = tensor(2.0)
+        y = tensor(3.0)
+        z = x + y
+        z.grad = 1.0
+        assert z._children[0].grad_fn() == 1.0  # dz/dx = 1
+
+    def test_add_grad_right(self):
+        x = tensor(2.0)
+        y = tensor(3.0)
+        z = x + y
+        z.grad = 1.0
+        assert z._children[1].grad_fn() == 1.0  # dz/dy = 1
+
+    def test_add_grad_scales_with_upstream(self):
+        x = tensor(2.0)
+        y = tensor(3.0)
+        z = x + y
+        z.grad = 5.0
+        assert z._children[0].grad_fn() == 5.0  # dz/dx * upstream = 1 * 5
+        assert z._children[1].grad_fn() == 5.0  # dz/dy * upstream = 1 * 5
+
+    # -- Multiplication -- #
+
+    def test_mul_grad_left(self):
+        x = tensor(2.0)
+        y = tensor(5.0)
+        z = x * y
+        z.grad = 1.0
+        assert z._children[0].grad_fn() == 5.0  # dz/dx = y = 5
+
+    def test_mul_grad_right(self):
+        x = tensor(2.0)
+        y = tensor(5.0)
+        z = x * y
+        z.grad = 1.0
+        assert z._children[1].grad_fn() == 2.0  # dz/dy = x = 2
+
+    def test_mul_grad_scales_with_upstream(self):
+        x = tensor(2.0)
+        y = tensor(5.0)
+        z = x * y
+        z.grad = 3.0
+        assert z._children[0].grad_fn() == 15.0  # dz/dx * upstream = 5 * 3
+        assert z._children[1].grad_fn() == 6.0   # dz/dy * upstream = 2 * 3
+
+    # -- Chained addition -- #
+
+    def test_add_chain(self):
+        # z = x + y, w = z + v
+        # dw/dx = 1, dw/dy = 1, dw/dv = 1
+        x = tensor(1.0)
+        y = tensor(2.0)
+        v = tensor(3.0)
+        z = x + y
+        w = z + v
+        w.grad = 1.0
+        z.grad = w._children[0].grad_fn()  # propagate to z
+        assert z.grad == 1.0
+        assert z._children[0].grad_fn() == 1.0  # dw/dx
+        assert z._children[1].grad_fn() == 1.0  # dw/dy
+
+    # -- Chained multiplication -- #
+
+    def test_mul_chain(self):
+        # z = x * y, w = z * v
+        # dw/dz = v, dw/dx = y * v, dw/dy = x * v
+        x = tensor(2.0)
+        y = tensor(3.0)
+        v = tensor(4.0)
+        z = x * y
+        w = z * v
+        w.grad = 1.0
+        z.grad = w._children[0].grad_fn()  # dw/dz = v = 4
+        assert z.grad == 4.0
+        assert z._children[0].grad_fn() == 12.0  # dw/dx = y * v = 3 * 4
+        assert z._children[1].grad_fn() == 8.0   # dw/dy = x * v = 2 * 4
+
+    # -- Mixed addition and multiplication -- #
+
+    def test_mul_then_add(self):
+        # z = x * y, w = z + v
+        # dw/dz = 1, dw/dx = y, dw/dy = x, dw/dv = 1
+        x = tensor(2.0)
+        y = tensor(3.0)
+        v = tensor(4.0)
+        z = x * y
+        w = z + v
+        w.grad = 1.0
+        z.grad = w._children[0].grad_fn()  # dw/dz = 1
+        assert z.grad == 1.0
+        assert z._children[0].grad_fn() == 3.0  # dw/dx = y = 3
+        assert z._children[1].grad_fn() == 2.0  # dw/dy = x = 2
+        assert w._children[1].grad_fn() == 1.0  # dw/dv = 1
+
+    def test_add_then_mul(self):
+        # z = x + y, w = z * v
+        # dw/dz = v, dw/dx = v, dw/dy = v, dw/dv = z = x + y
+        x = tensor(2.0)
+        y = tensor(3.0)
+        v = tensor(4.0)
+        z = x + y
+        w = z * v
+        w.grad = 1.0
+        z.grad = w._children[0].grad_fn()  # dw/dz = v = 4
+        assert z.grad == 4.0
+        assert z._children[0].grad_fn() == 4.0  # dw/dx = v = 4
+        assert z._children[1].grad_fn() == 4.0  # dw/dy = v = 4
+        assert w._children[1].grad_fn() == 5.0  # dw/dv = z = x + y = 5
+
+    # -- grad_fn return type -- #
+
+    def test_grad_fn_returns_numeric(self):
+        x = tensor(2.0)
+        y = tensor(3.0)
+        z = x * y
+        z.grad = 1.0
+        result = z._children[0].grad_fn()
+        assert isinstance(result, (int, float, np.integer, np.floating))
