@@ -8,4 +8,4 @@ def resolve_local_grads(ufunc, items):
         np.add: (1, 1),
     }
 
-    return SUPPORTED_UFUNCS[ufunc]
+    return SUPPORTED_UFUNCS.get(ufunc, [0 for _ in range(len(items))]) # temp patch until more funcs are supported
