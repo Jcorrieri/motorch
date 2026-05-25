@@ -10,6 +10,7 @@ References:
 import numpy as np
 from numpy.lib.mixins import NDArrayOperatorsMixin
 
+from motorch.utils.ufuncs import resolve_local_grads
 
 # --- __array_function__ implementations --- #
 
@@ -148,13 +149,14 @@ class Tensor(NDArrayOperatorsMixin):
 
         # Create graph
         result_t = tensor(result, result.dtype) 
-
         if track_grads:
             result_t._children = []
-            for item in inputs:
+            local_grads = resolve_local_grads(ufunc, inputs)
+            for i, item in enumerate(inputs):
                 if not isinstance(item, Tensor):
                     item = tensor(item, type(item))
                 result_t._children.append(item)
+                item.grad_fn = lambda g=local_grads[i]: result_t.grad * g
 
         # In-place op (numpy already mutated self.data, return self)
         if 'out' in kwargs and kwargs['out'][0] is self.data:
