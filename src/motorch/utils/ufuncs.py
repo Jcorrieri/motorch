@@ -1,4 +1,5 @@
 """Ufunc related utilities."""
+
 import numpy as np
 
 

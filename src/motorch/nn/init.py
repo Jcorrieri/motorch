@@ -4,6 +4,7 @@ Ref: https://github.com/pytorch/pytorch/blob/main/torch/nn/init.py
 
 Random Initialization relies on a passed generator object for now.
 """
+
 import math
 from motorch import Tensor, zeros_like
 

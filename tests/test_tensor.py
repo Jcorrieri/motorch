@@ -1,6 +1,7 @@
 import numpy as np
 from motorch import Tensor, tensor
 
+
 # --- Construction --- #
 
 class TestConstruction:

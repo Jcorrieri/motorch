@@ -7,10 +7,12 @@ References:
     - https://numpy.org/doc/stable/reference/generated/numpy.ndarray
     - https://numpy.org/doc/stable/user/basics.dispatch.html
 """
+
 import numpy as np
 from numpy.lib.mixins import NDArrayOperatorsMixin
 
 from motorch.utils.ufuncs import resolve_local_grads
+
 
 # --- __array_function__ implementations --- #
 
