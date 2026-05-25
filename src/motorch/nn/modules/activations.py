@@ -1,7 +1,9 @@
 """Activation modules for MoTorch."""
 
-import motorch as mo
 from .module import Module
+from motorch.utils import _track_grads, no_grad
+from motorch.tensor import tensor, tensor_zeros_like
+import motorch as mo
 import motorch.nn.functional as F
 
 
@@ -17,9 +19,22 @@ class Sigmoid(Module):
 
     def forward(self, x):
         """Compute the sigmoid activation and cache its gradient."""
-        self.grad = self._grad(x)
-        return F.sigmoid(x)
+        with no_grad():
+            out = F.sigmoid(x)
+        self.z = out
 
-    def _grad(self, x):
-        """Return the gradient of the sigmoid activation for input ``x``."""
-        return F.sigmoid_grad(x)
+        track_grads = _track_grads([x])
+        result = tensor(out.data, requires_grad=track_grads)
+        if track_grads:
+            result._children = [x] # store entire nd tensor as single child
+            local_grad = self._grad()
+            x.grad_fn = lambda _g=local_grad: result.grad * _g
+            result.grad = tensor_zeros_like(result.data).numpy()
+
+        return result
+
+    def _grad(self):
+        """Return the gradient of the sigmoid activation for input ``z``."""
+        with no_grad():
+            out = F.sigmoid_grad(self.z, precomputed=True)
+        return out

@@ -11,7 +11,7 @@ References:
 import numpy as np
 from numpy.lib.mixins import NDArrayOperatorsMixin
 
-from motorch.utils.ufuncs import resolve_local_grads
+from motorch.utils import _track_grads, resolve_local_grads
 
 
 # --- __array_function__ implementations --- #
@@ -93,6 +93,17 @@ class Tensor(NDArrayOperatorsMixin):
     def __repr__(self) -> str:
         return f"Tensor({self.data})"
 
+    def __format__(self, format_spec):
+        if (self.ndim > 1):
+            return self.__repr__()
+        return format(self.item(), format_spec)
+
+    def __float__(self):
+        return float(self.item())
+
+    def __int__(self):
+        return int(self.item())
+
     def __iter__(self):
         for item in self.data:
             yield Tensor(item)
@@ -137,8 +148,6 @@ class Tensor(NDArrayOperatorsMixin):
         if result is None:
             return None
 
-        result_t = tensor(result, result.dtype) 
-
         # Create graph
         def convert_to_tensor(x):
             if not isinstance(x, Tensor):
@@ -146,7 +155,8 @@ class Tensor(NDArrayOperatorsMixin):
             return x
 
         inputs_t = list(map(convert_to_tensor, inputs))
-        track_grads = any([t.requires_grad for t in inputs_t]) 
+        track_grads = _track_grads(inputs_t)
+        result_t = tensor(result, result.dtype, requires_grad=track_grads) 
         if track_grads: 
             result_t._children = []
             local_grads = resolve_local_grads(ufunc, unwrapped)
@@ -202,7 +212,7 @@ class Tensor(NDArrayOperatorsMixin):
         return self.data
 
     def backwards(self, keep_graph=False):
-        self.grad = 1.0
+        self.grad = tensor_ones_like(self.data).numpy()
         stack = [self]
         while stack:
             node = stack.pop(0)

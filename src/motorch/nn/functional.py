@@ -14,9 +14,17 @@ def sigmoid(x):
     x_clipped = mo.clip(x, -700, 700) # to avoid numerical instability
     return 1 / (1 + mo.exp(-x_clipped))
 
-def sigmoid_grad(x):
-    """Compute the gradient of the sigmoid activation."""
-    return sigmoid(x) * (1 - sigmoid(x))
+def sigmoid_grad(x, precomputed=False):
+    """
+    Compute the gradient of the sigmoid activation.
+
+    args:
+        - x (Tensor): the input data
+        - precomputed (boolean): whether x is the output of sigmoid
+    """
+    if not precomputed:
+        x = sigmoid(x)
+    return x * (1 - x)
 
 # --- Loss Functions --- #  TODO: Change name to explicit +1/-1 loss.
 

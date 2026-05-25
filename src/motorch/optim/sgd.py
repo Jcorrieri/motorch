@@ -1,6 +1,7 @@
 """Stochastic gradient descent optimizer."""
 
 from motorch.optim.optimizer import Optimizer
+from motorch.utils.no_grad import no_grad
 
 
 class SGD(Optimizer):
@@ -10,7 +11,7 @@ class SGD(Optimizer):
         super().__init__(parameters)
         self.lr = lr
 
-    def step(self):
+    def _step(self):
         """Update each parameter using its stored gradient and learning rate."""
         for param in self.parameters: 
             param -= self.lr * param.grad
