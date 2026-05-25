@@ -130,14 +130,13 @@ class Tensor(NDArrayOperatorsMixin):
 
     # handles __add__, __mul__, etc.
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
-        unwrapped = []
-        track_grads = False
-        for input in inputs:
-            if isinstance(input, Tensor):
-                unwrapped.append(input.data)
-                track_grads = track_grads or input.requires_grad
-            else:
-                unwrapped.append(input)
+        def unwrap(x):
+            if isinstance(x, Tensor):
+                return x.data
+            return x
+
+        unwrapped = list(map(unwrap, inputs))
+
         # Properly handle in-place operations (e.g. +=, -=)
         if 'out' in kwargs:
             kwargs['out'] = tuple(
@@ -145,20 +144,25 @@ class Tensor(NDArrayOperatorsMixin):
                 for o in kwargs['out']
             )
         result = getattr(ufunc, method)(*unwrapped, **kwargs)
-
         if result is None:
             return None
 
-        # Create graph
         result_t = tensor(result, result.dtype) 
-        if track_grads:
+
+        # Create graph
+        def convert_to_tensor(x):
+            if not isinstance(x, Tensor):
+                return tensor(x, requires_grad=False)
+            return x
+
+        inputs_t = list(map(convert_to_tensor, inputs))
+        track_grads = any([t.requires_grad for t in inputs_t]) 
+        if track_grads: 
             result_t._children = []
-            local_grads = resolve_local_grads(ufunc, inputs)
-            for i, item in enumerate(inputs):
-                if not isinstance(item, Tensor):
-                    item = tensor(item, type(item))
+            local_grads = resolve_local_grads(ufunc, unwrapped)
+            for i, item in enumerate(inputs_t):
                 result_t._children.append(item)
-                item.grad_fn = lambda g=local_grads[i]: result_t.grad * g
+                item.grad_fn = lambda _g=local_grads[i]: result_t.grad * _g
 
         # In-place op (numpy already mutated self.data, return self)
         if 'out' in kwargs and kwargs['out'][0] is self.data:
