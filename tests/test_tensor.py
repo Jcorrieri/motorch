@@ -150,7 +150,7 @@ class TestArithmetic:
 class TestMethods:
     def test_sum_method(self):
         t = Tensor([1, 2, 3])
-        assert t.sum() == 6
+        assert t.sum().data == 6
 
     def test_sum_method_axis(self):
         t = Tensor([[1, 2], [3, 4]])
@@ -158,7 +158,7 @@ class TestMethods:
 
     def test_mean_method(self):
         t = Tensor([1.0, 2.0, 3.0])
-        assert t.mean() == 2.0
+        assert t.mean().data == 2.0
 
     def test_mean_method_axis(self):
         t = Tensor([[1.0, 2.0], [3.0, 4.0]])
@@ -449,11 +449,11 @@ class TestNodeCreation:
         assert result._children is not None
         assert len(result._children) > 0
 
-    def test_no_children_when_no_inputs_require_grad(self):
+    def test_children_empty_when_no_inputs_require_grad(self):
         a = Tensor([1.0, 2.0], requires_grad=False)
         b = Tensor([3.0, 4.0], requires_grad=False)
         result = a + b
-        assert not hasattr(result, '_children') or result._children is None
+        assert result._children == []
 
     def test_children_contain_inputs(self):
         a = Tensor([1.0, 2.0], requires_grad=True)
@@ -487,10 +487,10 @@ class TestNodeCreation:
         a += 1.0
         assert a._version == version_before + 3
 
-    def test_inplace_no_children_when_no_grad(self):
+    def test_inplace_children_empty_when_no_grad(self):
         a = Tensor([1.0, 2.0], requires_grad=False)
         a += 1.0
-        assert not hasattr(a, '_children') or a._children is None
+        assert a._children == []
 
     def test_version_not_incremented_on_inplace_no_grad(self):
         a = Tensor([1.0, 2.0], requires_grad=False)

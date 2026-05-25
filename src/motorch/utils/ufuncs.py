@@ -5,8 +5,9 @@ import numpy as np
 
 def resolve_local_grads(ufunc, items):
     SUPPORTED_UFUNCS = {
-        np.multiply: (items[1], items[0]),
-        np.add: (1, 1),
+        np.multiply: lambda inputs: (inputs[1], inputs[0]),
+        np.add: lambda _: (1, 1),
     }
 
-    return SUPPORTED_UFUNCS.get(ufunc, [0 for _ in range(len(items))]) # temp patch until more funcs are supported
+    local_grad_fn = SUPPORTED_UFUNCS.get(ufunc, lambda _: [0 for _ in range(len(items))]) 
+    return local_grad_fn(items)

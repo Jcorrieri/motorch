@@ -88,9 +88,6 @@ class Module():
     def forward(self, *inputs, **kwargs):
         raise NotImplementedError
     
-    def backwards(self):
-        pass
-
     # NOTE: I stole most of the following from PyTorch directly
     def _get_name(self):
         return self.__class__.__name__

@@ -48,32 +48,22 @@ def tensor_clip(a, *args, **kwargs):
 
 def tensor_exp(arr, **kwargs):
     result = np.exp(arr.data, **kwargs)
-    if np.ndim(result) == 0:
-        return result.item()  # return plain scalar
     return Tensor(result)
 
 def tensor_log1p(arr, **kwargs):
     result = np.log1p(arr.data, **kwargs)
-    if np.ndim(result) == 0:
-        return result.item()  # return plain scalar
     return Tensor(result)
 
 def tensor_sum(arr, **kwargs):
     result = np.sum(arr.data, **kwargs)
-    if np.ndim(result) == 0:
-        return result.item()  # return plain scalar
     return Tensor(result)
 
 def tensor_mean(arr, **kwargs):
     result = np.mean(arr.data, **kwargs)
-    if np.ndim(result) == 0:
-        return result.item()  # return plain scalar
     return Tensor(result)
 
 def tensor_sqrt(arr, **kwargs):
     result = np.sqrt(arr.data, **kwargs)
-    if np.ndim(result) == 0:
-        return result.item()
     return Tensor(result)
 
 
@@ -89,9 +79,9 @@ class Tensor(NDArrayOperatorsMixin):
     def __init__(self, data, requires_grad=True, **kwargs) -> None:
         self.data = np.array(data, **kwargs) # always copies data
         self.grad = 0.0
-        self.grad_fn = None
+        self.grad_fn = lambda: 0.0
         self._backwards = lambda: None
-        self._children = None
+        self._children = []
         self._version = 0
         self.requires_grad = requires_grad
 
@@ -203,11 +193,25 @@ class Tensor(NDArrayOperatorsMixin):
             args = args[0]
         return tensor_reshape(self, args, **kwargs)
 
+    # --- Other Functions --- #
+
     def item(self, *args):
         return self.data.item(*args)
 
     def numpy(self) -> np.ndarray:
         return self.data
+
+    def backwards(self, keep_graph=False):
+        self.grad = 1.0
+        stack = [self]
+        while stack:
+            node = stack.pop(0)
+            gradient = node.grad_fn()
+            node.grad += gradient
+            print(f"Node: {node}, Grad: {node.grad}")
+            stack.extend(node._children)
+            if not keep_graph:
+                node._children = [] # only store graph until backwards() is called
 
     # --- Properties --- #
 
