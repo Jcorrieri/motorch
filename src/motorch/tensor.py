@@ -86,8 +86,10 @@ class Tensor(NDArrayOperatorsMixin):
     def __init__(self, data, requires_grad=True, **kwargs) -> None:
         self.data = np.array(data, **kwargs) # always copies data
         self.grad = 0.0
+        self.grad_fn = None
         self._backwards = lambda: None
         self._children = None
+        self._version = 0
         self.requires_grad = requires_grad
 
     # --- __Methods__ --- #
@@ -125,10 +127,14 @@ class Tensor(NDArrayOperatorsMixin):
 
     # handles __add__, __mul__, etc.
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
-        unwrapped = [
-            input.data if isinstance(input, Tensor) else input
-            for input in inputs
-        ]
+        unwrapped = []
+        track_grads = False
+        for input in inputs:
+            if isinstance(input, Tensor):
+                unwrapped.append(input.data)
+                track_grads = track_grads or input.requires_grad
+            else:
+                unwrapped.append(input)
         # Properly handle in-place operations (e.g. +=, -=)
         if 'out' in kwargs:
             kwargs['out'] = tuple(
@@ -140,15 +146,20 @@ class Tensor(NDArrayOperatorsMixin):
         if result is None:
             return None
 
+        # Create graph
         result_t = tensor(result, result.dtype) 
-        result_t._children = []
-        for item in inputs:
-            if not isinstance(item, Tensor):
-                item = tensor(item, type(item))
-            result_t._children.append(item)
+
+        if track_grads:
+            result_t._children = []
+            for item in inputs:
+                if not isinstance(item, Tensor):
+                    item = tensor(item, type(item))
+                result_t._children.append(item)
 
         # In-place op (numpy already mutated self.data, return self)
         if 'out' in kwargs and kwargs['out'][0] is self.data:
+            if track_grads:
+                self._version += 1 # if versions are not consistent throw error during backprop
             return self
 
         return result_t

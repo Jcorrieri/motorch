@@ -422,3 +422,77 @@ class TestNumpy:
         t = Tensor([[1, 2], [3, 4]])
         arr = t.numpy()
         np.testing.assert_array_equal(arr, np.array([[1, 2], [3, 4]]))
+
+
+# --- DAG node creation --- #
+
+class TestNodeCreation:
+    def test_children_exist_when_left_requires_grad(self):
+        a = Tensor([1.0, 2.0], requires_grad=True)
+        b = Tensor([3.0, 4.0], requires_grad=False)
+        result = a + b
+        assert result._children is not None
+        assert len(result._children) > 0
+
+    def test_children_exist_when_right_requires_grad(self):
+        a = Tensor([1.0, 2.0], requires_grad=False)
+        b = Tensor([3.0, 4.0], requires_grad=True)
+        result = a + b
+        assert result._children is not None
+        assert len(result._children) > 0
+
+    def test_children_exist_when_both_require_grad(self):
+        a = Tensor([1.0, 2.0], requires_grad=True)
+        b = Tensor([3.0, 4.0], requires_grad=True)
+        result = a + b
+        assert result._children is not None
+        assert len(result._children) > 0
+
+    def test_no_children_when_no_inputs_require_grad(self):
+        a = Tensor([1.0, 2.0], requires_grad=False)
+        b = Tensor([3.0, 4.0], requires_grad=False)
+        result = a + b
+        assert not hasattr(result, '_children') or result._children is None
+
+    def test_children_contain_inputs(self):
+        a = Tensor([1.0, 2.0], requires_grad=True)
+        b = Tensor([3.0, 4.0], requires_grad=False)
+        result = a + b
+        assert a in result._children
+        assert b in result._children
+
+    def test_scalar_input_wrapped_as_tensor_in_children(self):
+        a = Tensor([1.0, 2.0], requires_grad=True)
+        result = a + 2.0
+        assert all(isinstance(c, Tensor) for c in result._children)
+
+    def test_version_increments_on_inplace(self):
+        a = Tensor([1.0, 2.0], requires_grad=True)
+        version_before = a._version
+        a += 1.0
+        assert a._version == version_before + 1
+
+    def test_version_unchanged_on_out_of_place(self):
+        a = Tensor([1.0, 2.0], requires_grad=True)
+        version_before = a._version
+        _ = a + 1.0
+        assert a._version == version_before
+
+    def test_version_increments_each_inplace(self):
+        a = Tensor([1.0, 2.0], requires_grad=True)
+        version_before = a._version
+        a += 1.0
+        a += 1.0
+        a += 1.0
+        assert a._version == version_before + 3
+
+    def test_inplace_no_children_when_no_grad(self):
+        a = Tensor([1.0, 2.0], requires_grad=False)
+        a += 1.0
+        assert not hasattr(a, '_children') or a._children is None
+
+    def test_version_not_incremented_on_inplace_no_grad(self):
+        a = Tensor([1.0, 2.0], requires_grad=False)
+        version_before = a._version
+        a += 1.0
+        assert a._version == version_before
