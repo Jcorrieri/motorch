@@ -13,18 +13,15 @@ def sigmoid(x):
     x_clipped = mo.clip(x, -700, 700) # to avoid numerical instability
     return 1 / (1 + mo.exp(-x_clipped))
 
-
 def sigmoid_grad(x):
     """Compute the gradient of the sigmoid activation."""
     return sigmoid(x) * (1 - sigmoid(x))
 
-
-# --- Loss Functions --- #
+# --- Loss Functions --- #  TODO: Change name to explicit +1/-1 loss.
 
 def logloss(logits, labels):
     """Compute the average logistic loss for binary labels in {+1, -1}."""
     return mo.mean(mo.log1p(mo.exp(-logits * labels)))
-
 
 def logloss_grad(logits, labels):
     """Return the gradient of the logistic loss w.r.t. logits."""
@@ -47,3 +44,4 @@ def linear(x, weight, bias):
         f"Expected x.shape = ({len(x)}, {weight.shape[0]}), got {x.shape}."
 
     return x @ weight + bias
+
