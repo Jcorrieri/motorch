@@ -2,9 +2,11 @@
 Ref: https://github.com/pytorch/pytorch/blob/main/torch/nn/modules/module.py#L407
 """
 
+from collections.abc import Sequence
 from motorch.nn.parameter import Parameter
 from motorch import Tensor
-from motorch.utils import format
+from motorch.tensor import tensor_zeros_like
+from motorch.utils import format, _track_grads
 
 
 class Module():
@@ -87,6 +89,16 @@ class Module():
 
     def forward(self, *inputs, **kwargs):
         raise NotImplementedError
+
+    def _backwards(self, result: Tensor, inputs: Sequence, local_grads: Sequence):
+        if _track_grads(inputs):
+            result._children = list(inputs)
+            result.grad = tensor_zeros_like(result).numpy()
+            result.requires_grad = True
+            for input, grad in zip(inputs, local_grads):
+                input.grad_fn = lambda _g=grad: result.grad * (_g.data if isinstance(_g, Tensor) else _g)
+        else:
+            result.requires_grad = False
     
     # NOTE: I stole most of the following from PyTorch directly
     def _get_name(self):

@@ -136,7 +136,7 @@ class Tensor(NDArrayOperatorsMixin):
                 return x.data
             return x
 
-        unwrapped = list(map(unwrap, inputs))
+        unwrapped = [unwrap(input) for input in inputs]
 
         # Properly handle in-place operations (e.g. +=, -=)
         if 'out' in kwargs:
@@ -154,9 +154,9 @@ class Tensor(NDArrayOperatorsMixin):
                 return tensor(x, requires_grad=False)
             return x
 
-        inputs_t = list(map(convert_to_tensor, inputs))
+        inputs_t = [convert_to_tensor(input) for input in inputs]
         track_grads = _track_grads(inputs_t)
-        result_t = tensor(result, result.dtype, requires_grad=track_grads) 
+        result_t = tensor(result, requires_grad=track_grads) 
         if track_grads: 
             result_t._children = []
             local_grads = resolve_local_grads(ufunc, unwrapped)

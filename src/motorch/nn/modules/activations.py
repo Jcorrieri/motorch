@@ -1,8 +1,8 @@
 """Activation modules for MoTorch."""
 
 from .module import Module
-from motorch.utils import _track_grads, no_grad
-from motorch.tensor import tensor, tensor_zeros_like
+from motorch.utils import no_grad
+from motorch.tensor import tensor
 import motorch as mo
 import motorch.nn.functional as F
 
@@ -22,14 +22,10 @@ class Sigmoid(Module):
         with no_grad():
             out = F.sigmoid(x)
         self.z = out
+        
+        result = tensor(out.data)
 
-        track_grads = _track_grads([x])
-        result = tensor(out.data, requires_grad=track_grads)
-        if track_grads:
-            result._children = [x] # store entire nd tensor as single child
-            local_grad = self._grad()
-            x.grad_fn = lambda _g=local_grad: result.grad * _g
-            result.grad = tensor_zeros_like(result.data).numpy()
+        self._backwards(result, [x], [self._grad()])
 
         return result
 
