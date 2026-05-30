@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from motorch.nn.parameter import Parameter
 from motorch import Tensor
 from motorch.tensor import tensor_zeros_like
-from motorch.utils import format, _track_grads
+from motorch.utils import format, _requires_grad
 
 
 class Module():
@@ -90,8 +90,8 @@ class Module():
     def forward(self, *inputs, **kwargs):
         raise NotImplementedError
 
-    def _backwards(self, result: Tensor, inputs: Sequence, local_grads: Sequence):
-        if _track_grads(inputs):
+    def _compute_grad_fn(self, result: Tensor, inputs: Sequence, local_grads: Sequence):
+        if _requires_grad(inputs):
             result._children = list(inputs)
             result.grad = tensor_zeros_like(result).numpy()
             result.requires_grad = True

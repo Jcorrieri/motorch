@@ -13,5 +13,5 @@ class no_grad:
         no_grad._enabled = self._prev
 
 
-def _track_grads(inputs):
+def _requires_grad(inputs):
     return no_grad._enabled and any([t.requires_grad for t in inputs])

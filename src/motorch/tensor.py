@@ -8,10 +8,13 @@ References:
     - https://numpy.org/doc/stable/user/basics.dispatch.html
 """
 
+from types import FunctionType
+from typing import Optional
 import numpy as np
 from numpy.lib.mixins import NDArrayOperatorsMixin
 
-from motorch.utils import _track_grads, resolve_local_grads
+from motorch.utils import _requires_grad, resolve_local_grads
+from motorch.utils.no_grad import no_grad
 
 
 # --- __array_function__ implementations --- #
@@ -76,10 +79,10 @@ class Tensor(NDArrayOperatorsMixin):
     metadata for use in simple neural network computations.
     """
 
-    def __init__(self, data, requires_grad=True, **kwargs) -> None:
+    def __init__(self, data, requires_grad=False, **kwargs) -> None:
         self.data = np.array(data, **kwargs) # always copies data
-        self.grad = 0.0
-        self.grad_fn = lambda: 0.0
+        self.grad: Optional[Tensor] = None
+        self.grad_fn: Optional[FunctionType] = None
         self._backwards = lambda: None
         self._children = []
         self._version = 0
@@ -154,23 +157,32 @@ class Tensor(NDArrayOperatorsMixin):
                 return tensor(x, requires_grad=False)
             return x
 
+        # ERROR: multiple instances of the same child will have grad_fn be overridden!
         inputs_t = [convert_to_tensor(input) for input in inputs]
-        track_grads = _track_grads(inputs_t)
-        result_t = tensor(result, requires_grad=track_grads) 
-        if track_grads: 
-            result_t._children = []
+        requires_grad = _requires_grad(inputs_t)
+        result_t = tensor(result, requires_grad=requires_grad) 
+        if requires_grad: 
+            result_t._children = inputs_t
             local_grads = resolve_local_grads(ufunc, unwrapped)
-            for i, item in enumerate(inputs_t):
-                result_t._children.append(item)
-                item.grad_fn = lambda _g=local_grads[i]: result_t.grad * _g
+            result.grad_fn = lambda _g=local_grads: self._grad_fn(result_t, inputs_t, _g)
 
         # In-place op (numpy already mutated self.data, return self)
         if 'out' in kwargs and kwargs['out'][0] is self.data:
-            if track_grads:
+            if requires_grad:
                 self._version += 1 # if versions are not consistent throw error during backprop
             return self
 
         return result_t
+
+    def _grad_fn(self, z, inputs, local_grads):
+        expected_version = z._version
+        with no_grad():
+            for i, x in enumerate(inputs):
+                if not x.grad:
+                    x.grad = tensor_zeros_like(x)
+                x.grad += z.grad * local_grads[i]
+                if x._version != expected_version:
+                    raise ValueError(f"{x} has been modified illegally.")
 
     # --- Intrinsic Numpy Function Support (e.g. Tensor.mean(), Tensor.exp()) --- #
 
@@ -212,12 +224,12 @@ class Tensor(NDArrayOperatorsMixin):
         return self.data
 
     def backwards(self, keep_graph=False):
-        self.grad = tensor_ones_like(self.data).numpy()
+        self.grad = tensor_ones_like(self.data)
         stack = [self]
         while stack:
             node = stack.pop(0)
-            gradient = node.grad_fn()
-            node.grad += gradient
+            if node.grad_fn:
+                node.grad_fn()
             print(f"Node: {node}, Grad: {node.grad}")
             stack.extend(node._children)
             if not keep_graph:
@@ -244,7 +256,7 @@ class Tensor(NDArrayOperatorsMixin):
 
 # --- Standalone Functions --- #
 
-def tensor(data, dtype=None, requires_grad=True, **kwargs):
+def tensor(data, dtype=None, requires_grad=False, **kwargs):
     """Create a new ``Tensor`` from array-like data.
 
     Parameters:

@@ -1,8 +1,8 @@
 """Loss modules for MoTorch."""
 
 from motorch.nn.modules import Module
-from motorch.tensor import tensor, tensor_ones_like
-from motorch.utils import no_grad 
+from motorch.tensor import tensor, tensor_zeros_like 
+from motorch.utils import no_grad, _requires_grad
 import motorch.nn.functional as F
 
 
@@ -14,15 +14,19 @@ class LogisticLoss(Module):
         with no_grad():
             out = F.logloss(labels, logits) 
 
-        result = tensor(out.data)
-        logits_local_grad = self._grad(logits, labels)
-        labels_local_grad = tensor_ones_like(labels).numpy() # TODO: Add label grads
-        self._backwards(result, (labels, logits), (labels_local_grad, logits_local_grad))
+        requires_grad = _requires_grad([logits])
+        result = tensor(out.data, requires_grad=requires_grad)
+        if requires_grad:
+            result.grad_fn = lambda _z=result: self._grad_fn(_z, logits, labels)
+            result._children = [logits]
 
         return result
 
-    def _grad(self, logits, labels):
+    def _grad_fn(self, z, x, y):
         with no_grad():
-            out = F.logloss_grad(logits, labels)
-        return out
+            local_grad = F.logloss_grad(x, y)
+            for item in [x, y]:
+                if not item.grad:
+                    item.grad = tensor_zeros_like(item)
+            x.grad += z.grad * local_grad
 
