@@ -1,39 +1,87 @@
 # MoTorch
 
-MoTorch is a lightweight, NumPy-based deep learning library inspired by the PyTorch API. It provides a minimal Tensor container, simple neural network modules, optimization utilities, and loss functions for building small models and experimenting with training loops.
+MoTorch is a lightweight, NumPy-based deep learning library inspired by the PyTorch API.  It provides a Tensor container with automatic differentiation, neural network modules, optimization utilities, and loss functions for building and training models from scratch.
 
 ## Basic Usage
 
-Create tensors, build a model, and run a forward pass with familiar primitives:
+Build a model, run a forward pass, and backpropagate gradients:
 
 ```python
 import motorch as mo
-from motorch.nn import Linear, Sigmoid, LogisticLoss
-from motorch.optim import SGD
+import motorch.nn as nn
+import motorch.optim as optim
 
 x = mo.tensor([[0.1, 0.2], [0.3, 0.4]], requires_grad=True)
-model = Linear(in_features=2, out_features=1)
-activation = Sigmoid()
-criterion = LogisticLoss()
-optimizer = SGD(model.parameters(), lr=0.01)
+y = mo.tensor([[1.0], [-1.0]])
+
+model = nn.Linear(in_features=2, out_features=1)
+activation = nn.AltSigmoid()
+criterion = nn.LogisticLoss()
+optimizer = optim.SGD(model.parameters(), lr=0.01)
 
 logits = activation(model(x))
-loss = criterion(logits, mo.tensor([1, -1]))
+loss = criterion(logits, y)
 
 optimizer.zero_grad()
-# backward pass not implemented in this prototype
-# optimizer.step()
+loss.backward()
+optimizer.step()
 ```
+
+## Training Loop
+
+A standard training loop with train/validation splits and gradient descent:
+
+```python
+loss_fn = nn.LogisticLoss()
+optimizer = optim.SGD(model.parameters(), lr=0.8)
+
+for epoch in range(num_epochs):
+    optimizer.zero_grad()
+
+    logits = model(train_x)
+    loss = loss_fn(logits, train_y)
+    loss.backward()
+    optimizer.step()
+
+    with mo.no_grad():
+        val_logits = model(val_x)
+        val_loss = loss_fn(val_logits, val_y)
+```
+
+## Modules:
+
+MoTorch follows the PyTorch module pattern. Models are defined by subclassing nn.Module and implementing forward:
+
+```python
+class AltSigmoidMLP(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.layer1 = nn.Linear(2, 3)
+        self.act1   = nn.AltSigmoid()
+        self.output = nn.Linear(3, 1)
+        self.act2   = nn.AltSigmoid()
+
+    def forward(self, x):
+        x = self.act1(self.layer1(x))
+        x = self.act2(self.output(x))
+        return x
+
+model = AltSigmoidMLP()
+```
+
+Currently available modules (more to come):
+
+- Layers: nn.Linear
+- Activations: nn.Sigmoid, nn.AltSigmoid, nn.Sgn
+- Loss: nn.LogisticLoss
+- Optimizers: optim.SGD
 
 ## Examples
 
-The `examples/` directory contains working notebooks that demonstrate how to use MoTorch for basic classification and model training. These examples show how to:
+The examples/ directory contains working notebooks demonstrating MoTorch for classification and model training, including:
 
-- construct simple feedforward models
-- apply activation functions and loss modules
-- run training loops with parameter updates
-
-Start with `examples/binary_classifier.ipynb` to see a concrete binary classification workflow.
+- `examples/binary_classifier.ipynb` - binary classification on a 2D dataset with manual weight initialization,
+Glorot initialization, a full train/validation loop, and decision boundary visualization.
 
 ## Development
 
@@ -54,3 +102,4 @@ The implementation is inspired by the following references:
 - PyTorch module structure: https://github.com/pytorch/pytorch/blob/v2.11.0/torch/nn
 - PyTorch module base class reference: https://github.com/pytorch/pytorch/blob/main/torch/nn/modules/module.py#L407
 - PyTorch parameter initialization reference: https://github.com/pytorch/pytorch/blob/main/torch/nn/init.py
+- Andrej Karpathy's micrograd: https://www.youtube.com/watch?v=VMj-3S1tku0&t=1624s
