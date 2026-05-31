@@ -1,6 +1,6 @@
 """Base optimizer abstractions for MoTorch."""
 
-from motorch.tensor import Tensor, tensor_zeros_like
+from motorch.tensor import Tensor
 from motorch.utils.no_grad import no_grad
 
 
@@ -14,7 +14,7 @@ class Optimizer:
         """Reset gradients to zero for all tracked parameters."""
         for param in self.parameters:
             if isinstance(param, Tensor):
-                param.grad = tensor_zeros_like(param)
+                param.grad = None
 
     def step(self):
         """Apply a single optimization step.

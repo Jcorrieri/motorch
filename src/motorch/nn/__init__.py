@@ -12,6 +12,7 @@ from .modules import (
     LogisticLoss,
     Sgn,
     Sigmoid,
+    AltSigmoid
 )
 
 __all__ = [
@@ -20,6 +21,7 @@ __all__ = [
     "LogisticLoss",
     "Sgn",
     "Sigmoid",
+    "AltSigmoid",
     "functional",
     "init",
     "Parameter"

@@ -13,8 +13,10 @@ from typing import Optional
 import numpy as np
 from numpy.lib.mixins import NDArrayOperatorsMixin
 
+from motorch.autograd.topological_sort import topological_sort
 from motorch.autograd.ufuncs import resolve_local_grads
 from motorch.autograd.forward import apply_forward_pass
+from motorch.utils.no_grad import no_grad
 
 
 # --- __array_function__ implementations --- #
@@ -157,8 +159,7 @@ class Tensor(NDArrayOperatorsMixin):
 
         inputs_t = [convert_to_tensor(input) for input in inputs]
         result_t = tensor(result) 
-        local_grads = resolve_local_grads(ufunc, inputs_t)
-        apply_forward_pass(result_t, inputs_t, local_grads)
+        apply_forward_pass(result_t, inputs_t, None, ufunc=ufunc)
 
         # In-place op (numpy already mutated self.data, return self)
         if 'out' in kwargs and kwargs['out'][0] is self.data:
@@ -208,16 +209,14 @@ class Tensor(NDArrayOperatorsMixin):
         return self.data
 
     def backward(self, keep_graph=False):
-        self.grad = tensor_ones_like(self.data)
-        stack = [self]
-        while stack:
-            node = stack.pop(0)
+        self.grad = tensor_ones_like(self)
+        sorted_nodes = topological_sort(self)
+        for node in sorted_nodes:
             if node.grad_fn:
                 node.grad_fn()
-            print(f"Node: {node}, Grad: {node.grad}")
-            stack.extend(node._children)
             if not keep_graph:
-                node._children = [] # only store graph until backwards() is called
+                node._children = []
+                node.grad_fn = None
 
     # --- Properties --- #
 

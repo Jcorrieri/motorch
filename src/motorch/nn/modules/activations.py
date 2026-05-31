@@ -24,8 +24,8 @@ class Sigmoid(Module):
             out = F.sigmoid(x)
 
         result = tensor(out.data)
-        local_grads = [self._grad_fn(result)]
-        apply_forward_pass(result, [x], local_grads)
+        local_grad = [self._grad_fn(result)]
+        apply_forward_pass(result, [x], local_grad)
 
         return result
 
@@ -34,3 +34,24 @@ class Sigmoid(Module):
         with no_grad():
             out = F.sigmoid_grad(z, precomputed=True)
         return out
+
+
+class AltSigmoid(Module):
+    """Sigmoid function rescaled to output values between -1 and 1."""
+
+    def forward(self, x):
+        with no_grad():
+            out = 2 * F.sigmoid(x) - 1
+
+        result = tensor(out.data)
+        local_grad = [self._grad_fn(x)]
+        apply_forward_pass(result, [x], local_grad)
+
+        return result
+
+    def _grad_fn(self, x):
+        with no_grad():
+            out = 2 * F.sigmoid_grad(x)
+        return out
+
+

@@ -1,7 +1,6 @@
 """Stochastic gradient descent optimizer."""
 
 from motorch.optim.optimizer import Optimizer
-from motorch.utils.no_grad import no_grad
 
 
 class SGD(Optimizer):

@@ -1,9 +1,13 @@
 from motorch.utils.no_grad import no_grad, _requires_grad
+from .ufuncs import resolve_local_grads
 
 
-def apply_forward_pass(z, inputs, local_grads):
+def apply_forward_pass(z, inputs, local_grads, ufunc=None):
     if not _requires_grad(inputs): 
         return
+
+    if ufunc:
+        local_grads = resolve_local_grads(ufunc, inputs)
 
     def grad_fn():
         expected_version = z._version
