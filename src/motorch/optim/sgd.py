@@ -10,7 +10,7 @@ class SGD(Optimizer):
         super().__init__(parameters)
         self.lr = lr
 
-    def step(self):
+    def _step(self):
         """Update each parameter using its stored gradient and learning rate."""
         for param in self.parameters: 
             param -= self.lr * param.grad

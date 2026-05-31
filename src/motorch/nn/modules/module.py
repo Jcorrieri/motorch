@@ -1,11 +1,12 @@
 """
 Ref: https://github.com/pytorch/pytorch/blob/main/torch/nn/modules/module.py#L407
 """
-from typing import Any, Union
 
+from collections.abc import Sequence
 from motorch.nn.parameter import Parameter
 from motorch import Tensor
-from motorch.utils import format
+from motorch.tensor import tensor_zeros_like
+from motorch.utils import format, _requires_grad
 
 
 class Module():
@@ -23,7 +24,7 @@ class Module():
         super().__setattr__("_modules", {})
 
     # For distinguishing between trainable parameters and other attributes
-    def __setattr__(self, name: str, value: Any, /) -> None:
+    def __setattr__(self, name: str, value, /) -> None:
         """Register Parameters and child Modules automatically.
 
         Parameters assigned to module attributes are stored in internal
@@ -39,7 +40,7 @@ class Module():
             object.__setattr__(self, name, value)
 
     # Needed to support __getattr__ override
-    def __getattr__(self, name: str) -> Union[Tensor, "Module"]:
+    def __getattr__(self, name: str) -> "Tensor | Module":
         """Retrieve registered parameters, buffers, or child modules."""
         if "_parameters" in self.__dict__:
             _parameters = self.__dict__["_parameters"]
@@ -88,9 +89,6 @@ class Module():
 
     def forward(self, *inputs, **kwargs):
         raise NotImplementedError
-    
-    def backwards(self):
-        pass
 
     # NOTE: I stole most of the following from PyTorch directly
     def _get_name(self):

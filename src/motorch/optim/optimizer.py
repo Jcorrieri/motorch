@@ -1,6 +1,7 @@
 """Base optimizer abstractions for MoTorch."""
 
 from motorch.tensor import Tensor
+from motorch.utils.no_grad import no_grad
 
 
 class Optimizer:
@@ -13,12 +14,16 @@ class Optimizer:
         """Reset gradients to zero for all tracked parameters."""
         for param in self.parameters:
             if isinstance(param, Tensor):
-                param.grad = 0.0 # type: ignore[AttributeAccessIssue]
+                param.grad = None
 
     def step(self):
         """Apply a single optimization step.
 
-        Subclasses should override this method with the specific update rule.
+        Subclasses should override _step with the specific update rule.
         """
+        with no_grad():
+            self._step()
+
+    def _step(self):
         raise NotImplementedError
 

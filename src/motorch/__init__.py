@@ -5,6 +5,7 @@ The top-level package exports the core Tensor container and a small set of
 NumPy-compatible tensor creation and manipulation utilities.
 """
 
+from .utils import no_grad
 from .tensor import (
     Tensor,
     tensor,
@@ -29,6 +30,7 @@ from .tensor import (
 )
 
 __all__ = [
+    "no_grad",
     "Tensor",
     "tensor",
     "column_stack",

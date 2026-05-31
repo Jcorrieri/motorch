@@ -1,6 +1,9 @@
 """Loss modules for MoTorch."""
 
+from motorch.autograd.forward import apply_forward_pass
 from motorch.nn.modules import Module
+from motorch.tensor import tensor 
+from motorch.utils import no_grad 
 import motorch.nn.functional as F
 
 
@@ -9,9 +12,17 @@ class LogisticLoss(Module):
 
     def forward(self, logits, labels):
         """Compute the logistic loss and cache its gradient."""
-        self.grad = self._grad(logits, labels)
-        return F.logloss(labels, logits)
+        with no_grad():
+            out = F.logloss(labels, logits) 
 
-    def _grad(self, logits, labels):
-        return F.logloss_grad(logits, labels)
+        result = tensor(out.data)
+        local_grads = [self._grad_fn(logits, labels)]
+        apply_forward_pass(result, [logits], local_grads)
+
+        return result
+
+    def _grad_fn(self, x, y):
+        with no_grad():
+            x_local_grad = F.logloss_grad(x, y)
+        return x_local_grad # TODO: Return label grads
 

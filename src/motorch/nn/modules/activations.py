@@ -1,7 +1,10 @@
 """Activation modules for MoTorch."""
 
-import motorch as mo
+from motorch.autograd.forward import apply_forward_pass
 from .module import Module
+from motorch.utils import no_grad 
+from motorch.tensor import tensor
+import motorch as mo
 import motorch.nn.functional as F
 
 
@@ -17,9 +20,38 @@ class Sigmoid(Module):
 
     def forward(self, x):
         """Compute the sigmoid activation and cache its gradient."""
-        self.grad = self._grad(x)
-        return F.sigmoid(x)
+        with no_grad():
+            out = F.sigmoid(x)
 
-    def _grad(self, x):
-        """Return the gradient of the sigmoid activation for input ``x``."""
-        return F.sigmoid_grad(x)
+        result = tensor(out.data)
+        local_grad = [self._grad_fn(result)]
+        apply_forward_pass(result, [x], local_grad)
+
+        return result
+
+    def _grad_fn(self, z):
+        """Compute the gradient of the sigmoid activation w.r.t the input x."""
+        with no_grad():
+            out = F.sigmoid_grad(z, precomputed=True)
+        return out
+
+
+class AltSigmoid(Module):
+    """Sigmoid function rescaled to output values between -1 and 1."""
+
+    def forward(self, x):
+        with no_grad():
+            out = 2 * F.sigmoid(x) - 1
+
+        result = tensor(out.data)
+        local_grad = [self._grad_fn(x)]
+        apply_forward_pass(result, [x], local_grad)
+
+        return result
+
+    def _grad_fn(self, x):
+        with no_grad():
+            out = 2 * F.sigmoid_grad(x)
+        return out
+
+

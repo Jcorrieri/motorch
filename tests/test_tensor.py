@@ -1,6 +1,7 @@
 import numpy as np
 from motorch import Tensor, tensor
 
+
 # --- Construction --- #
 
 class TestConstruction:
@@ -144,92 +145,33 @@ class TestArithmetic:
         assert isinstance(a + b, Tensor)
 
 
-# --- np.* dispatch --- #
-
-class TestNumpyDispatch:
-    def test_np_sum(self):
-        t = Tensor([1, 2, 3])
-        assert np.sum(t) == 6
-
-    def test_np_sum_axis(self):
-        t = Tensor([[1, 2], [3, 4]])
-        np.testing.assert_array_equal(np.sum(t, axis=0).data, np.array([4, 6]))
-
-    def test_np_sum_returns_scalar(self):
-        t = Tensor([1, 2, 3])
-        result = np.sum(t)
-        assert isinstance(result, (int, float, np.integer, np.floating))
-
-    def test_np_mean(self):
-        t = Tensor([1.0, 2.0, 3.0])
-        assert np.mean(t) == 2.0
-
-    def test_np_mean_axis(self):
-        t = Tensor([[1.0, 2.0], [3.0, 4.0]])
-        np.testing.assert_array_equal(np.mean(t, axis=0).data, np.array([2.0, 3.0]))
-
-    def test_np_exp(self):
-        t = Tensor([0.0])
-        np.testing.assert_allclose(np.exp(t).data, np.array([1.0])) # type: ignore[reportCallIssue]
-
-    def test_np_log1p(self):
-        t = Tensor([0.0])
-        np.testing.assert_allclose(np.log1p(t).data, np.array([0.0])) # type: ignore[reportCallIssue]
-
-    def test_np_transpose(self):
-        t = Tensor([[1, 2], [3, 4]])
-        result = np.transpose(t)
-        np.testing.assert_array_equal(result.data, np.array([[1, 3], [2, 4]]))
-
-    def test_np_stack(self):
-        a = Tensor([1, 2])
-        b = Tensor([3, 4])
-        result = np.stack([a, b])
-        assert isinstance(result, Tensor)
-        np.testing.assert_array_equal(result.data, np.array([[1, 2], [3, 4]]))
-
-    def test_np_concatenate(self):
-        a = Tensor([1, 2])
-        b = Tensor([3, 4])
-        result = np.concatenate([a, b])
-        np.testing.assert_array_equal(result.data, np.array([1, 2, 3, 4]))
-
-    def test_np_ones(self):
-        t = np.ones((2, 3))
-        assert isinstance(np.ones((2, 3)), np.ndarray)  # not dispatched
-        result = np.ones_like(Tensor(t))
-        assert isinstance(result, Tensor)
-
-    def test_np_zeros_like(self):
-        t = Tensor([[1, 2], [3, 4]])
-        result = np.zeros_like(t)
-        np.testing.assert_array_equal(result.data, np.zeros((2, 2)))
-
-    def test_np_where(self):
-        t = Tensor([1, -1, 2, -2])
-        result = np.where(t.data > 0, t.data, 0)
-        np.testing.assert_array_equal(result, np.array([1, 0, 2, 0]))
-
-    def test_np_clip(self):
-        t = Tensor([1, 2, 3, 4, 5])
-        result = np.clip(t, 2, 4)
-        np.testing.assert_array_equal(result.data, np.array([2, 2, 3, 4, 4]))
-
-
 # --- Instance methods --- #
 
 class TestMethods:
     def test_sum_method(self):
         t = Tensor([1, 2, 3])
-        assert t.sum() == 6
+        assert t.sum().data == 6
+
+    def test_sum_method_axis(self):
+        t = Tensor([[1, 2], [3, 4]])
+        np.testing.assert_array_equal(t.sum(axis=0).data, np.array([4, 6]))
 
     def test_mean_method(self):
         t = Tensor([1.0, 2.0, 3.0])
-        assert t.mean() == 2.0
+        assert t.mean().data == 2.0
+
+    def test_mean_method_axis(self):
+        t = Tensor([[1.0, 2.0], [3.0, 4.0]])
+        np.testing.assert_array_equal(t.mean(axis=0).data, np.array([2.0, 3.0]))
 
     def test_transpose_method(self):
         t = Tensor([[1, 2], [3, 4]])
         np.testing.assert_array_equal(t.transpose().data, t.T.data)
+
+    def test_transpose_method_with_axes(self):
+        t = Tensor(np.ones((2, 3, 4)))
+        result = t.transpose((2, 0, 1))
+        assert result.shape == (4, 2, 3)
 
     def test_item(self):
         t = Tensor([42])
@@ -241,161 +183,71 @@ class TestMethods:
         assert isinstance(arr, np.ndarray)
         np.testing.assert_array_equal(arr, np.array([1, 2, 3]))
 
-# --- Additional Tests --- #
+    def test_exp(self):
+        t = Tensor([0.0])
+        np.testing.assert_allclose(t.exp().data, np.array([1.0]))
 
-class TestModuleFunctions:
-    """Tests for motorch.ones, zeros, empty and their _like variants via np.* dispatch"""
-
-    def test_np_ones_shape(self):
-        result = np.ones((2, 3))
-        assert isinstance(result, np.ndarray)  # not dispatched, plain ndarray
-        assert result.shape == (2, 3)
-
-    def test_np_zeros_shape(self):
-        result = np.zeros((3, 4))
-        assert isinstance(result, np.ndarray)
-        assert result.shape == (3, 4)
-
-    def test_np_empty_shape(self):
-        result = np.empty((2, 2))
-        assert isinstance(result, np.ndarray)
-        assert result.shape == (2, 2)
-
-    def test_np_ones_like_tensor(self):
-        t = Tensor([[1, 2], [3, 4]])
-        result = np.ones_like(t)
-        assert isinstance(result, Tensor)
-        np.testing.assert_array_equal(result.data, np.ones((2, 2)))
-
-    def test_np_ones_like_preserves_shape(self):
-        t = Tensor(np.zeros((3, 5)))
-        result = np.ones_like(t)
-        assert result.shape == (3, 5)
-
-    def test_np_ones_like_preserves_dtype(self):
-        t = Tensor(np.zeros((2, 2), dtype=np.float32))
-        result = np.ones_like(t)
-        assert result.dtype == np.float32
-
-    def test_np_zeros_like_tensor(self):
-        t = Tensor([[1, 2], [3, 4]])
-        result = np.zeros_like(t)
-        assert isinstance(result, Tensor)
-        np.testing.assert_array_equal(result.data, np.zeros((2, 2)))
-
-    def test_np_zeros_like_preserves_dtype(self):
-        t = Tensor(np.ones((2, 2), dtype=np.float64))
-        result = np.zeros_like(t)
-        assert result.dtype == np.float64
-
-    def test_np_empty_like_tensor(self):
-        t = Tensor([[1, 2], [3, 4]])
-        result = np.empty_like(t)
-        assert isinstance(result, Tensor)
-        assert result.shape == t.shape
-
-    def test_np_empty_like_preserves_dtype(self):
-        t = Tensor(np.zeros((2, 2), dtype=np.int32))
-        result = np.empty_like(t)
-        assert result.dtype == np.int32
-
-
-class TestWhere:
-    """Tests for np.where dispatch"""
-
-    def test_where_basic(self):
-        t = Tensor([1, -1, 2, -2])
-        result = np.where(t.data > 0, 1, -1)
-        np.testing.assert_array_equal(result, np.array([1, -1, 1, -1]))
-
-    def test_where_with_tensors(self):
-        cond = Tensor([1, -1, 2, -2]).data > 0
-        x = Tensor([10, 20, 30, 40])
-        y = Tensor([0, 0, 0, 0])
-        result = np.where(cond, x.data, y.data)
-        np.testing.assert_array_equal(result, np.array([10, 0, 30, 0]))
-
-    def test_where_2d(self):
-        t = Tensor([[1, -1], [-2, 3]])
-        result = np.where(t.data > 0, t.data, 0)
-        np.testing.assert_array_equal(result, np.array([[1, 0], [0, 3]]))
-
-    def test_where_scalar_fill(self):
-        t = Tensor([1.0, -1.0, 2.0])
-        result = np.where(t.data >= 0, t.data, 0.0)
-        np.testing.assert_array_equal(result, np.array([1.0, 0.0, 2.0]))
-
-
-class TestClip:
-    """Tests for np.clip dispatch"""
+    def test_log1p(self):
+        t = Tensor([0.0])
+        np.testing.assert_allclose(t.log1p().data, np.array([0.0]))
 
     def test_clip_basic(self):
         t = Tensor([1, 2, 3, 4, 5])
-        result = np.clip(t, 2, 4)
+        result = t.clip(2, 4)
         assert isinstance(result, Tensor)
         np.testing.assert_array_equal(result.data, np.array([2, 2, 3, 4, 4]))
 
     def test_clip_min_only(self):
         t = Tensor([-1, 0, 1, 2])
-        result = np.clip(t, 0, None)
+        result = t.clip(0, None)
         np.testing.assert_array_equal(result.data, np.array([0, 0, 1, 2]))
 
     def test_clip_max_only(self):
         t = Tensor([1, 2, 3, 4])
-        result = np.clip(t, None, 3)
+        result = t.clip(None, 3)
         np.testing.assert_array_equal(result.data, np.array([1, 2, 3, 3]))
 
     def test_clip_float(self):
         t = Tensor([0.5, 1.5, 2.5])
-        result = np.clip(t, 1.0, 2.0)
-        np.testing.assert_allclose(result.data, np.array([1.0, 1.5, 2.0])) # type: ignore[reportCallIssue]
+        result = t.clip(1.0, 2.0)
+        np.testing.assert_allclose(result.data, np.array([1.0, 1.5, 2.0]))
 
     def test_clip_no_effect(self):
         t = Tensor([2, 3, 4])
-        result = np.clip(t, 1, 5)
+        result = t.clip(1, 5)
         np.testing.assert_array_equal(result.data, t.data)
 
 
-class TestTranspose:
-    """Tests for np.transpose and .T dispatch"""
+# --- Transpose --- #
 
+class TestTranspose:
     def test_transpose_2d(self):
         t = Tensor([[1, 2, 3], [4, 5, 6]])
-        result = np.transpose(t)
+        result = t.transpose()
         assert result.shape == (3, 2)
         np.testing.assert_array_equal(result.data, t.data.T)
 
     def test_transpose_returns_tensor(self):
         t = Tensor([[1, 2], [3, 4]])
-        assert isinstance(np.transpose(t), Tensor)
+        assert isinstance(t.transpose(), Tensor)
 
     def test_transpose_with_axes(self):
-        t = Tensor(np.ones((2, 3, 4)))
-        result = np.transpose(t, axes=(2, 0, 1))
-        assert result.shape == (4, 2, 3)
-
-    def test_transpose_method_2d(self):
-        t = Tensor([[1, 2], [3, 4]])
-        result = t.transpose()
-        np.testing.assert_array_equal(result.data, np.array([[1, 3], [2, 4]]))
-
-    def test_transpose_method_with_axes(self):
         t = Tensor(np.ones((2, 3, 4)))
         result = t.transpose((2, 0, 1))
         assert result.shape == (4, 2, 3)
 
     def test_T_vs_transpose_consistent(self):
         t = Tensor([[1, 2, 3], [4, 5, 6]])
-        np.testing.assert_array_equal(t.T.data, np.transpose(t).data)
+        np.testing.assert_array_equal(t.T.data, t.transpose().data)
 
     def test_transpose_1d_noop(self):
         t = Tensor([1, 2, 3])
-        np.testing.assert_array_equal(np.transpose(t).data, t.data)
+        np.testing.assert_array_equal(t.transpose().data, t.data)
 
+
+# --- In-place operations --- #
 
 class TestInPlace:
-    """Tests for in-place operations via __array_ufunc__"""
-
     def test_iadd_scalar(self):
         t = Tensor([1.0, 2.0, 3.0])
         t += 1
@@ -436,9 +288,9 @@ class TestInPlace:
         assert id(t) == original_id
 
 
-class TestBroadcasting:
-    """Tests for scalar and shape broadcasting"""
+# --- Broadcasting --- #
 
+class TestBroadcasting:
     def test_add_scalar(self):
         t = Tensor([1.0, 2.0, 3.0])
         np.testing.assert_array_equal((t + 5).data, np.array([6.0, 7.0, 8.0]))
@@ -472,9 +324,89 @@ class TestBroadcasting:
         assert isinstance(1 + t, Tensor)
 
 
-class TestNumpy:
-    """Tests for Tensor.numpy() method"""
+# --- Reshape --- #
+ 
+class TestReshape:
+    def test_reshape_method_basic(self):
+        t = Tensor([1, 2, 3, 4, 5, 6])
+        result = t.reshape((2, 3))
+        assert result.shape == (2, 3)
+ 
+    def test_reshape_method_returns_tensor(self):
+        t = Tensor([1, 2, 3, 4])
+        assert isinstance(t.reshape((2, 2)), Tensor)
+ 
+    def test_reshape_method_preserves_data(self):
+        t = Tensor([1, 2, 3, 4, 5, 6])
+        result = t.reshape((2, 3))
+        np.testing.assert_array_equal(result.data, np.array([[1, 2, 3], [4, 5, 6]]))
+ 
+    def test_reshape_method_to_1d(self):
+        t = Tensor([[1, 2], [3, 4]])
+        result = t.reshape((4,))
+        np.testing.assert_array_equal(result.data, np.array([1, 2, 3, 4]))
+ 
+    def test_reshape_method_inferred_dim(self):
+        t = Tensor([1, 2, 3, 4, 5, 6])
+        result = t.reshape((2, -1))
+        assert result.shape == (2, 3)
+ 
+    def test_reshape_method_3d(self):
+        t = Tensor(np.arange(24))
+        result = t.reshape((2, 3, 4))
+        assert result.shape == (2, 3, 4)
+ 
+    def test_reshape_method_same_shape(self):
+        t = Tensor([[1, 2], [3, 4]])
+        result = t.reshape((2, 2))
+        np.testing.assert_array_equal(result.data, t.data)
+ 
+    def test_reshape_method_preserves_dtype(self):
+        t = Tensor(np.array([1, 2, 3, 4], dtype=np.float32))
+        result = t.reshape((2, 2))
+        assert result.dtype == np.float32
+ 
+    def test_module_reshape_basic(self):
+        import motorch
+        t = Tensor([1, 2, 3, 4, 5, 6])
+        result = motorch.reshape(t, (2, 3))
+        assert result.shape == (2, 3)
+ 
+    def test_module_reshape_returns_tensor(self):
+        import motorch
+        t = Tensor([1, 2, 3, 4])
+        assert isinstance(motorch.reshape(t, (2, 2)), Tensor)
+ 
+    def test_module_reshape_preserves_data(self):
+        import motorch
+        t = Tensor([1, 2, 3, 4, 5, 6])
+        result = motorch.reshape(t, (2, 3))
+        np.testing.assert_array_equal(result.data, np.array([[1, 2, 3], [4, 5, 6]]))
+ 
+    def test_module_reshape_inferred_dim(self):
+        import motorch
+        t = Tensor([1, 2, 3, 4, 5, 6])
+        result = motorch.reshape(t, (3, -1))
+        assert result.shape == (3, 2)
+ 
+    def test_module_reshape_3d(self):
+        import motorch
+        t = Tensor(np.arange(24))
+        result = motorch.reshape(t, (2, 3, 4))
+        assert result.shape == (2, 3, 4)
+ 
+    def test_method_and_module_consistent(self):
+        import motorch
+        t = Tensor([1, 2, 3, 4, 5, 6])
+        np.testing.assert_array_equal(
+            t.reshape((2, 3)).data,
+            motorch.reshape(t, (2, 3)).data,
+        )
 
+
+# --- .numpy() method --- #
+
+class TestNumpy:
     def test_numpy_returns_ndarray(self):
         t = Tensor([1.0, 2.0, 3.0])
         assert isinstance(t.numpy(), np.ndarray)
@@ -491,3 +423,4 @@ class TestNumpy:
         t = Tensor([[1, 2], [3, 4]])
         arr = t.numpy()
         np.testing.assert_array_equal(arr, np.array([[1, 2], [3, 4]]))
+

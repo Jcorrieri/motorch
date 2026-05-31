@@ -9,6 +9,7 @@ from .loss import LogisticLoss
 from .activations import (
     Sgn,
     Sigmoid,
+    AltSigmoid
 )
 
 __all__ = [
@@ -17,4 +18,5 @@ __all__ = [
     "LogisticLoss",
     "Sgn",
     "Sigmoid",
+    "AltSigmoid"
 ]

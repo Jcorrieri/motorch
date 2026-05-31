@@ -2,6 +2,7 @@
 Functional components for MoTorch. PyTorch delegates these to underlying C logic, but for simplicity the 
 explicit implementations are defined here, in Python.
 """
+
 import motorch as mo
 from motorch import Tensor
 
@@ -13,18 +14,23 @@ def sigmoid(x):
     x_clipped = mo.clip(x, -700, 700) # to avoid numerical instability
     return 1 / (1 + mo.exp(-x_clipped))
 
+def sigmoid_grad(x, precomputed=False):
+    """
+    Compute the gradient of the sigmoid activation.
 
-def sigmoid_grad(x):
-    """Compute the gradient of the sigmoid activation."""
-    return sigmoid(x) * (1 - sigmoid(x))
+    args:
+        - x (Tensor): the input data
+        - precomputed (boolean): whether x is the output of sigmoid
+    """
+    if not precomputed:
+        x = sigmoid(x)
+    return x * (1 - x)
 
-
-# --- Loss Functions --- #
+# --- Loss Functions --- #  TODO: Change name to explicit +1/-1 loss.
 
 def logloss(logits, labels):
     """Compute the average logistic loss for binary labels in {+1, -1}."""
     return mo.mean(mo.log1p(mo.exp(-logits * labels)))
-
 
 def logloss_grad(logits, labels):
     """Return the gradient of the logistic loss w.r.t. logits."""
@@ -47,3 +53,4 @@ def linear(x, weight, bias):
         f"Expected x.shape = ({len(x)}, {weight.shape[0]}), got {x.shape}."
 
     return x @ weight + bias
+
