@@ -14,9 +14,7 @@ import numpy as np
 from numpy.lib.mixins import NDArrayOperatorsMixin
 
 from motorch.autograd.topological_sort import topological_sort
-from motorch.autograd.ufuncs import resolve_local_grads
 from motorch.autograd.forward import apply_forward_pass
-from motorch.utils.no_grad import no_grad
 
 
 # --- __array_function__ implementations --- #

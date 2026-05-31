@@ -1,8 +1,20 @@
+from collections.abc import Sequence
 from motorch.utils.no_grad import no_grad, _requires_grad
 from .ufuncs import resolve_local_grads
 
 
 def apply_forward_pass(z, inputs, local_grads, ufunc=None):
+    assert isinstance(inputs, Sequence), \
+        f"inputs must be a sequence, got {type(inputs)}"
+    assert isinstance(local_grads, Sequence) or local_grads is None, \
+        f"local_grads must be a sequence, got {type(local_grads)}"
+
+    if local_grads:
+        assert len(inputs) == len(local_grads), \
+            f"inputs and local_grads must have same length, got {len(inputs)} and {len(local_grads)}"
+    else:
+        assert ufunc, f"local_grads is None but no ufunc was passed"
+
     if not _requires_grad(inputs): 
         return
 
