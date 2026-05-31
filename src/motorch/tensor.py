@@ -13,8 +13,8 @@ from typing import Optional
 import numpy as np
 from numpy.lib.mixins import NDArrayOperatorsMixin
 
-from motorch.utils import _requires_grad, resolve_local_grads
-from motorch.utils.no_grad import no_grad
+from motorch.autograd.ufuncs import resolve_local_grads
+from motorch.autograd.forward import apply_forward_pass
 
 
 # --- __array_function__ implementations --- #
@@ -97,9 +97,7 @@ class Tensor(NDArrayOperatorsMixin):
         return f"Tensor({self.data})"
 
     def __format__(self, format_spec):
-        if (self.ndim > 1):
-            return self.__repr__()
-        return format(self.item(), format_spec)
+        return self.__repr__()
 
     def __float__(self):
         return float(self.item())
@@ -157,32 +155,18 @@ class Tensor(NDArrayOperatorsMixin):
                 return tensor(x, requires_grad=False)
             return x
 
-        # ERROR: multiple instances of the same child will have grad_fn be overridden!
         inputs_t = [convert_to_tensor(input) for input in inputs]
-        requires_grad = _requires_grad(inputs_t)
-        result_t = tensor(result, requires_grad=requires_grad) 
-        if requires_grad: 
-            result_t._children = inputs_t
-            local_grads = resolve_local_grads(ufunc, unwrapped)
-            result.grad_fn = lambda _g=local_grads: self._grad_fn(result_t, inputs_t, _g)
+        result_t = tensor(result) 
+        local_grads = resolve_local_grads(ufunc, inputs_t)
+        apply_forward_pass(result_t, inputs_t, local_grads)
 
         # In-place op (numpy already mutated self.data, return self)
         if 'out' in kwargs and kwargs['out'][0] is self.data:
-            if requires_grad:
+            if result_t.requires_grad:
                 self._version += 1 # if versions are not consistent throw error during backprop
             return self
 
         return result_t
-
-    def _grad_fn(self, z, inputs, local_grads):
-        expected_version = z._version
-        with no_grad():
-            for i, x in enumerate(inputs):
-                if not x.grad:
-                    x.grad = tensor_zeros_like(x)
-                x.grad += z.grad * local_grads[i]
-                if x._version != expected_version:
-                    raise ValueError(f"{x} has been modified illegally.")
 
     # --- Intrinsic Numpy Function Support (e.g. Tensor.mean(), Tensor.exp()) --- #
 
@@ -223,7 +207,7 @@ class Tensor(NDArrayOperatorsMixin):
     def numpy(self) -> np.ndarray:
         return self.data
 
-    def backwards(self, keep_graph=False):
+    def backward(self, keep_graph=False):
         self.grad = tensor_ones_like(self.data)
         stack = [self]
         while stack:

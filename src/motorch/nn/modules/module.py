@@ -90,16 +90,6 @@ class Module():
     def forward(self, *inputs, **kwargs):
         raise NotImplementedError
 
-    def _compute_grad_fn(self, result: Tensor, inputs: Sequence, local_grads: Sequence):
-        if _requires_grad(inputs):
-            result._children = list(inputs)
-            result.grad = tensor_zeros_like(result).numpy()
-            result.requires_grad = True
-            for input, grad in zip(inputs, local_grads):
-                input.grad_fn = lambda _g=grad: result.grad * (_g.data if isinstance(_g, Tensor) else _g)
-        else:
-            result.requires_grad = False
-    
     # NOTE: I stole most of the following from PyTorch directly
     def _get_name(self):
         return self.__class__.__name__
