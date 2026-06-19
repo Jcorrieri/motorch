@@ -17,11 +17,11 @@ def from_tensor(parameter, value):
     else:
         parameter.data = value
 
-def glorot(rng, weight):
+def glorot(rng, weight, gain=1.0):
     """Initialize weights using the Glorot/Xavier uniform scheme."""
     with no_grad():
         fan_in, fan_out = weight.shape
-        gl_x = math.sqrt(6 / (fan_in + fan_out))
+        gl_x = math.sqrt(6 / (fan_in + fan_out)) * gain
         weight.data = rng.uniform(-gl_x, gl_x, (fan_in, fan_out))
 
 def zeros(weight):

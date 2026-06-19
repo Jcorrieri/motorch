@@ -49,7 +49,7 @@ class Linear(Module):
                     item.grad = tensor_zeros_like(item)
             x.grad += result.grad @ self.weight.T
             self.weight.grad += x.T @ result.grad
-            self.bias.grad += result.grad.mean(axis=0)
+            self.bias.grad += result.grad.sum(axis=0)
 
     def extra_repr(self) -> str:
         """
