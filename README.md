@@ -59,11 +59,10 @@ class AltSigmoidMLP(nn.Module):
         self.layer1 = nn.Linear(2, 3)
         self.act1   = nn.AltSigmoid()
         self.output = nn.Linear(3, 1)
-        self.act2   = nn.AltSigmoid()
 
     def forward(self, x):
         x = self.act1(self.layer1(x))
-        x = self.act2(self.output(x))
+        x = self.output(x)
         return x
 
 model = AltSigmoidMLP()
