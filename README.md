@@ -92,6 +92,13 @@ Run the test suite with:
 uv run pytest
 ```
 
+Run linting & formatting with `Ruff`:
+
+```bash
+uv run ruff format --check .
+uv run ruff check .
+```
+
 ## References
 
 The implementation is inspired by the following references:
