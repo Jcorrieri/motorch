@@ -33,17 +33,13 @@ uv run ruff format .
 
 Notes:
 
-- The project does not currently pass Ruff linting. Do not treat existing lint
-  failures as part of an unrelated task.
-- Use Ruff for both linting and formatting when formatting is needed.
+- Use Ruff for both linting and formatting when making changes.
 - Development dependencies are declared in `pyproject.toml` under
   `[dependency-groups].dev`.
 
 ## Testing Expectations
 
 - Add or update pytest tests for behavioral changes.
-- For autograd changes, include tests that cover both forward values and
-  gradients when practical.
 - Prefer `np.testing.assert_array_equal` or `np.testing.assert_allclose` for
   tensor data comparisons.
 - Run the narrowest relevant pytest target first, then broaden if the change
