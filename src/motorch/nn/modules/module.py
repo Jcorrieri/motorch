@@ -2,11 +2,9 @@
 Ref: https://github.com/pytorch/pytorch/blob/main/torch/nn/modules/module.py#L407
 """
 
-from collections.abc import Sequence
 from motorch.nn.parameter import Parameter
 from motorch import Tensor
-from motorch.tensor import tensor_zeros_like
-from motorch.utils import format, _requires_grad
+from motorch.utils import format
 
 
 class Module():

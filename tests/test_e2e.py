@@ -12,10 +12,9 @@ through finite differences and behavioral properties.
 """
 
 import numpy as np
-import pytest
 from motorch.tensor import tensor, Tensor
 from motorch.nn.modules.linear import Linear
-from motorch.nn.modules.activations import AltSigmoid, Sigmoid
+from motorch.nn.modules.activations import AltSigmoid
 from motorch.nn.modules.loss import LogisticLoss
 from motorch.optim.sgd import SGD
 import motorch.nn as nn

@@ -13,7 +13,7 @@ def apply_forward_pass(z, inputs, local_grads, ufunc=None):
         assert len(inputs) == len(local_grads), \
             f"inputs and local_grads must have same length, got {len(inputs)} and {len(local_grads)}"
     else:
-        assert ufunc, f"local_grads is None but no ufunc was passed"
+        assert ufunc, "local_grads is None but no ufunc was passed"
 
     if not _requires_grad(inputs): 
         return
