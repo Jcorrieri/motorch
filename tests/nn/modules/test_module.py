@@ -52,7 +52,7 @@ class ActivationModule(Module):
 class TestInit:
     def test_training_default_true(self):
         m = SimpleModule()
-        assert m.training == True
+        assert m.training
 
     def test_parameters_empty(self):
         m = SimpleModule()
@@ -191,18 +191,18 @@ class TestParameters:
 class TestTrainEval:
     def test_default_training_true(self):
         m = SimpleModule()
-        assert m.training == True
+        assert m.training
 
     def test_eval_sets_false(self):
         m = SimpleModule()
         m.eval()
-        assert m.training == False
+        assert not m.training
 
     def test_train_sets_true(self):
         m = SimpleModule()
         m.eval()
         m.train()
-        assert m.training == True
+        assert m.training
 
     def test_train_returns_self(self):
         m = SimpleModule()
@@ -217,23 +217,23 @@ class TestTrainEval:
     def test_train_propagates_to_children(self):
         m = NestedModule()
         m.eval()
-        assert m.layer1.training == False
-        assert m.layer2.training == False
+        assert not m.layer1.training
+        assert not m.layer2.training
         m.train()
-        assert m.layer1.training == True
-        assert m.layer2.training == True
+        assert m.layer1.training
+        assert m.layer2.training
 
     def test_eval_propagates_to_children(self):
         m = NestedModule()
         m.eval()
-        assert m.training == False
-        assert m.layer1.training == False
-        assert m.layer2.training == False
+        assert not m.training
+        assert not m.layer1.training
+        assert not m.layer2.training
 
     def test_train_mode_false(self):
         m = SimpleModule()
         m.train(False)
-        assert m.training == False
+        assert not m.training
 
 
 # --- forward() / __call__ --- #

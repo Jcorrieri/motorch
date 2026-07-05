@@ -12,6 +12,7 @@ through finite differences and behavioral properties.
 """
 
 import numpy as np
+import motorch as mo
 from motorch.tensor import tensor, Tensor
 from motorch.nn.modules.linear import Linear
 from motorch.nn.modules.activations import AltSigmoid
@@ -60,6 +61,42 @@ def make_data(n=20, n_features=4, seed=0):
     X = rng.normal(0, 1, (n, n_features))
     y = np.where(X[:, 0] > 0, 1.0, -1.0)
     return tensor(X), tensor(y.reshape(-1, 1))
+
+
+def assign_binary_classifier_labels(points: np.ndarray) -> np.ndarray:
+    """Notebook label rule: positive inside the three-line enclosed region."""
+    x, y = points[:, 0], points[:, 1]
+    enclosed = (y <= 2 - x) & (y <= x + 1) & (y >= 0)
+    return np.where(enclosed, 1, -1)
+
+
+def make_binary_classifier_data(rng, num_samples: int):
+    data = rng.uniform(
+        low=[-0.5, -0.3],
+        high=[1.5, 1.72],
+        size=(num_samples, 2),
+    )
+    labels = assign_binary_classifier_labels(data)
+    return tensor(np.column_stack((data, labels)))
+
+
+def accuracy(preds, labels):
+    return mo.mean(preds == labels)
+
+
+class NotebookBinaryClassifier(nn.Module):
+    """Model architecture from examples/binary_classifier.ipynb."""
+
+    def __init__(self):
+        super().__init__()
+        self.layer1 = nn.Linear(2, 3)
+        self.act1 = nn.AltSigmoid()
+        self.output = nn.Linear(3, 1)
+
+    def forward(self, x):
+        x = self.layer1(x)
+        x = self.act1(x)
+        return self.output(x)
 
 
 # ── output shape ──────────────────────────────────────────────────────────────
@@ -376,3 +413,55 @@ class TestMultiPass:
             assert node.grad_fn is None, (
                 f"grad_fn not cleared on node of shape {node.shape}"
             )
+
+
+# ── notebook regression ───────────────────────────────────────────────────────
+
+
+class TestNotebookBinaryClassifier:
+    def test_alt_sigmoid_classifier_matches_notebook_training_behavior(self):
+        rng = np.random.default_rng(seed=42)
+        data = make_binary_classifier_data(rng, num_samples=1250)
+        all_x, all_y = data[:, :-1], data[:, -1].reshape(-1, 1)
+        split_idx = int(0.8 * len(all_x))
+        train_x, train_y = all_x[:split_idx, :], all_y[:split_idx, :]
+        val_x, val_y = all_x[split_idx:, :], all_y[split_idx:, :]
+
+        model = NotebookBinaryClassifier()
+        nn.init.glorot(rng, model.layer1.weight, gain=2.0)
+        nn.init.zeros(model.layer1.bias)
+        nn.init.glorot(rng, model.output.weight, gain=2.0)
+        nn.init.zeros(model.output.bias)
+
+        loss_fn = nn.LogisticLoss()
+        optimizer = SGD(model.parameters(), lr=0.5)
+
+        with mo.no_grad():
+            initial_val_loss = float(loss_fn(model(val_x), val_y).data)
+
+        for _ in range(2_000):
+            optimizer.zero_grad()
+            sort_idx = rng.permutation(len(train_x))
+            batch_x = train_x[sort_idx]
+            batch_y = train_y[sort_idx]
+
+            train_loss = loss_fn(model(batch_x), batch_y)
+            train_loss.backward()
+            optimizer.step()
+
+        optimizer.zero_grad()
+        final_train_loss = loss_fn(model(train_x), train_y)
+        final_train_loss.backward()
+
+        with mo.no_grad():
+            logits = model(val_x)
+            final_val_loss = float(loss_fn(logits, val_y).data)
+            preds = mo.where(logits >= 0, 1, -1)
+            val_acc = float(accuracy(preds, val_y).data)
+
+        assert final_val_loss < initial_val_loss
+        assert final_val_loss < 0.16
+        assert val_acc >= 0.94
+        for param in model.parameters():
+            assert param.grad is not None
+            assert param.grad.shape == param.shape

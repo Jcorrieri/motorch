@@ -28,7 +28,7 @@ class TestConstruction:
 
     def test_requires_grad(self):
         t = Tensor([1, 2, 3], requires_grad=False)
-        assert t.requires_grad == False
+        assert not t.requires_grad
 
 
 # --- Properties --- #
