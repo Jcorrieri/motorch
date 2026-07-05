@@ -22,6 +22,7 @@ import motorch.nn as nn
 
 # ── fixtures ──────────────────────────────────────────────────────────────────
 
+
 def make_mlp(layer_sizes, activation=AltSigmoid):
     """Build a simple MLP with the given layer sizes and activation."""
 
@@ -29,12 +30,12 @@ def make_mlp(layer_sizes, activation=AltSigmoid):
         def __init__(self):
             super().__init__()
             self.layers = []
-            self.acts   = []
+            self.acts = []
             for i, (in_f, out_f) in enumerate(zip(layer_sizes, layer_sizes[1:])):
                 layer = Linear(in_f, out_f)
-                act   = activation()
+                act = activation()
                 setattr(self, f"layer{i}", layer)
-                setattr(self, f"act{i}",   act)
+                setattr(self, f"act{i}", act)
                 self.layers.append(layer)
                 self.acts.append(act)
 
@@ -63,8 +64,8 @@ def make_data(n=20, n_features=4, seed=0):
 
 # ── output shape ──────────────────────────────────────────────────────────────
 
-class TestOutputShape:
 
+class TestOutputShape:
     def test_single_sample_output_shape(self):
         model = make_mlp([4, 8, 1])
         set_weights(model)
@@ -92,7 +93,7 @@ class TestOutputShape:
         x = tensor(np.random.randn(50, 4))
         out = model(x)
         assert np.all(out.data > -1.0)
-        assert np.all(out.data <  1.0)
+        assert np.all(out.data < 1.0)
 
     def test_returns_tensor(self):
         model = make_mlp([4, 8, 1])
@@ -103,8 +104,8 @@ class TestOutputShape:
 
 # ── graph construction ────────────────────────────────────────────────────────
 
-class TestGraphConstruction:
 
+class TestGraphConstruction:
     def test_grad_fn_set_on_output(self):
         model = make_mlp([4, 8, 1])
         set_weights(model)
@@ -129,8 +130,9 @@ class TestGraphConstruction:
         loss_fn = LogisticLoss()
         loss_fn(model(X), y).backward()
         for param in model.parameters():
-            assert param.grad.shape == param.shape, \
+            assert param.grad.shape == param.shape, (
                 f"Grad shape {param.grad.shape} != param shape {param.shape}"
+            )
 
     def test_loss_scalar_output(self):
         model = make_mlp([4, 8, 1])
@@ -142,8 +144,8 @@ class TestGraphConstruction:
 
 # ── gradient flow ─────────────────────────────────────────────────────────────
 
-class TestGradientFlow:
 
+class TestGradientFlow:
     def test_gradients_nonzero(self):
         """All parameter gradients should be non-zero for a typical input."""
         model = make_mlp([4, 8, 1])
@@ -151,8 +153,9 @@ class TestGradientFlow:
         X, y = make_data()
         LogisticLoss()(model(X), y).backward()
         for param in model.parameters():
-            assert np.any(param.grad.data != 0), \
+            assert np.any(param.grad.data != 0), (
                 f"All-zero gradient for parameter of shape {param.shape}"
+            )
 
     def test_numerical_gradient_check(self):
         """
@@ -173,7 +176,7 @@ class TestGradientFlow:
         for param in model.parameters():
             analytical = param.grad.data.copy()
             flat = param.data.flatten()
-            numerical  = np.zeros_like(flat)
+            numerical = np.zeros_like(flat)
 
             for i in range(len(flat)):
                 original = flat[i]
@@ -188,9 +191,11 @@ class TestGradientFlow:
                 param.data.flat[i] = original  # restore
 
             np.testing.assert_allclose(
-                analytical.flatten(), numerical,
-                rtol=1e-3, atol=1e-5,
-                err_msg=f"Numerical grad mismatch for param shape {param.shape}"
+                analytical.flatten(),
+                numerical,
+                rtol=1e-3,
+                atol=1e-5,
+                err_msg=f"Numerical grad mismatch for param shape {param.shape}",
             )
 
     def test_gradients_flow_to_first_layer(self):
@@ -201,19 +206,19 @@ class TestGradientFlow:
         LogisticLoss()(model(X), y).backward()
         first_layer = model.layer0
         assert np.any(first_layer.weight.grad.data != 0)
-        assert np.any(first_layer.bias.grad.data   != 0)
+        assert np.any(first_layer.bias.grad.data != 0)
 
 
 # ── training dynamics ─────────────────────────────────────────────────────────
 
-class TestTrainingDynamics:
 
+class TestTrainingDynamics:
     def test_loss_decreases_over_steps(self):
         """Loss should decrease monotonically over a few steps on a simple dataset."""
         model = make_mlp([4, 8, 1])
         set_weights(model)
         X, y = make_data(n=50)
-        loss_fn   = LogisticLoss()
+        loss_fn = LogisticLoss()
         optimizer = SGD(model.parameters(), lr=0.5)
         losses = []
 
@@ -224,14 +229,15 @@ class TestTrainingDynamics:
             optimizer.step()
             losses.append(float(loss.data))
 
-        assert losses[-1] < losses[0], \
+        assert losses[-1] < losses[0], (
             f"Loss did not decrease: {losses[0]:.4f} -> {losses[-1]:.4f}"
+        )
 
     def test_weights_change_after_step(self):
         model = make_mlp([4, 8, 1])
         set_weights(model)
         X, y = make_data()
-        loss_fn   = LogisticLoss()
+        loss_fn = LogisticLoss()
         optimizer = SGD(model.parameters(), lr=0.1)
 
         weights_before = [p.data.copy() for p in model.parameters()]
@@ -241,7 +247,9 @@ class TestTrainingDynamics:
         weights_after = [p.data.copy() for p in model.parameters()]
 
         for before, after in zip(weights_before, weights_after):
-            assert not np.allclose(before, after), "Weights unchanged after optimizer step"
+            assert not np.allclose(before, after), (
+                "Weights unchanged after optimizer step"
+            )
 
     def test_weights_unchanged_without_step(self):
         model = make_mlp([4, 8, 1])
@@ -273,14 +281,14 @@ class TestTrainingDynamics:
 
 # ── multi-pass correctness ────────────────────────────────────────────────────
 
-class TestMultiPass:
 
+class TestMultiPass:
     def test_gradients_consistent_across_passes(self):
         """Same input should produce same gradients on every pass after zero_grad."""
         model = make_mlp([4, 8, 1])
         set_weights(model)
         X, y = make_data(n=10)
-        loss_fn   = LogisticLoss()
+        loss_fn = LogisticLoss()
         optimizer = SGD(model.parameters(), lr=0.0)  # lr=0: weights stay fixed
 
         grads_per_pass = []
@@ -293,14 +301,16 @@ class TestMultiPass:
             np.testing.assert_allclose(
                 grads_per_pass[0][param_idx],
                 grads_per_pass[1][param_idx],
-                rtol=1e-6, atol=1e-8,
-                err_msg="Gradients differ between pass 1 and pass 2"
+                rtol=1e-6,
+                atol=1e-8,
+                err_msg="Gradients differ between pass 1 and pass 2",
             )
             np.testing.assert_allclose(
                 grads_per_pass[1][param_idx],
                 grads_per_pass[2][param_idx],
-                rtol=1e-6, atol=1e-8,
-                err_msg="Gradients differ between pass 2 and pass 3"
+                rtol=1e-6,
+                atol=1e-8,
+                err_msg="Gradients differ between pass 2 and pass 3",
             )
 
     def test_gradients_do_not_accumulate_across_passes(self):
@@ -308,7 +318,7 @@ class TestMultiPass:
         model = make_mlp([4, 8, 1])
         set_weights(model)
         X, y = make_data(n=10)
-        loss_fn   = LogisticLoss()
+        loss_fn = LogisticLoss()
         optimizer = SGD(model.parameters(), lr=0.0)
 
         # Single pass
@@ -322,15 +332,20 @@ class TestMultiPass:
         second_pass_grads = [p.grad.data.copy() for p in model.parameters()]
 
         for g1, g2 in zip(single_pass_grads, second_pass_grads):
-            np.testing.assert_allclose(g1, g2, rtol=1e-6, atol=1e-8,
-                err_msg="Gradients accumulated across passes — zero_grad may be broken")
+            np.testing.assert_allclose(
+                g1,
+                g2,
+                rtol=1e-6,
+                atol=1e-8,
+                err_msg="Gradients accumulated across passes — zero_grad may be broken",
+            )
 
     def test_loss_monotonically_decreasing_multi_pass(self):
         """Loss should decrease on every step, not just overall."""
         model = make_mlp([4, 8, 1])
         set_weights(model, seed=7)
         X, y = make_data(n=100, seed=7)
-        loss_fn   = LogisticLoss()
+        loss_fn = LogisticLoss()
         optimizer = SGD(model.parameters(), lr=0.3)
         prev_loss = float("inf")
 
@@ -340,8 +355,9 @@ class TestMultiPass:
             loss.backward()
             optimizer.step()
             current_loss = float(loss.data)
-            assert current_loss < prev_loss, \
+            assert current_loss < prev_loss, (
                 f"Loss increased at step {step}: {prev_loss:.4f} -> {current_loss:.4f}"
+            )
             prev_loss = current_loss
 
     def test_grad_fn_cleared_after_backward(self):
@@ -353,8 +369,10 @@ class TestMultiPass:
         loss = loss_fn(model(X), y)
 
         from motorch.autograd.topological_sort import topological_sort
+
         nodes = topological_sort(loss)
         loss.backward()
         for node in nodes:
-            assert node.grad_fn is None, \
+            assert node.grad_fn is None, (
                 f"grad_fn not cleared on node of shape {node.shape}"
+            )

@@ -7,7 +7,7 @@ from motorch import Tensor
 from motorch.utils import format
 
 
-class Module():
+class Module:
     """Base class for neural network modules.
 
     Modules can contain both parameters and child modules. They support
@@ -33,7 +33,7 @@ class Module():
             params[name] = value
         elif isinstance(value, Module):
             modules = self.__dict__.get("_modules", {})
-            modules[name] = value 
+            modules[name] = value
         else:
             object.__setattr__(self, name, value)
 
@@ -78,7 +78,7 @@ class Module():
         """Set the module to training mode and propagate to child modules."""
         self.training = mode
         for module in getattr(self, "_modules").values():
-            module.train(mode)   # propagates to all children
+            module.train(mode)  # propagates to all children
         return self
 
     def eval(self):
@@ -125,5 +125,3 @@ class Module():
 
         main_str += ")"
         return main_str
-
-    

@@ -24,12 +24,14 @@ class Linear(Module):
         This method validates the expected shapes for the weight and bias tensors
         before applying the linear transformation.
         """
-        assert self.weight.shape == (self.in_features, self.out_features),\
+        assert self.weight.shape == (self.in_features, self.out_features), (
             f"Unexpected weight shape {self.weight.shape}, expected\
             {(self.in_features, self.out_features)}."
+        )
 
-        assert self.bias.shape == (1, self.out_features), \
+        assert self.bias.shape == (1, self.out_features), (
             f"Unexpected bias shape {self.bias.shape}, expected {(1, self.out_features)}."
+        )
 
         with no_grad():
             out = F.linear(x, self.weight, self.bias)

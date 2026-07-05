@@ -8,7 +8,9 @@ class Optimizer:
     """Base class for parameter optimizers."""
 
     def __init__(self, parameters):
-        self.parameters = list(parameters) # convert to list for reuse (generators are one-time only).
+        self.parameters = list(
+            parameters
+        )  # convert to list for reuse (generators are one-time only).
 
     def zero_grad(self):
         """Reset gradients to zero for all tracked parameters."""
@@ -26,4 +28,3 @@ class Optimizer:
 
     def _step(self):
         raise NotImplementedError
-

@@ -19,51 +19,66 @@ from motorch.autograd.forward import apply_forward_pass
 
 # --- __array_function__ implementations --- #
 
+
 def tensor_stack(tup, **kwargs):
     return Tensor(np.stack([t.data for t in tup], **kwargs))
+
 
 def tensor_colstack(tup):
     return Tensor(np.column_stack([t.data for t in tup]))
 
+
 def tensor_concat(tup, **kwargs):
     return Tensor(np.concatenate([t.data for t in tup], **kwargs))
+
 
 def tensor_ones_like(arr, **kwargs):
     return Tensor(np.ones_like(arr.data, **kwargs))
 
+
 def tensor_zeros_like(arr, **kwargs):
     return Tensor(np.zeros_like(arr.data, **kwargs))
+
 
 def tensor_empty_like(arr, **kwargs):
     return Tensor(np.empty_like(arr.data, **kwargs))
 
+
 def tensor_transpose(arr, axes=None):
     return Tensor(np.transpose(arr.data, axes))
+
 
 def tensor_reshape(arr, shape, **kwargs):
     return Tensor(np.reshape(arr.data, shape, **kwargs))
 
+
 def tensor_where(cond, x, y):
     return Tensor(np.where(cond.data, x, y))
 
+
 def tensor_clip(a, *args, **kwargs):
     return Tensor(np.clip(a.data, *args, **kwargs))
+
 
 def tensor_exp(arr, **kwargs):
     result = np.exp(arr.data, **kwargs)
     return Tensor(result)
 
+
 def tensor_log1p(arr, **kwargs):
     result = np.log1p(arr.data, **kwargs)
     return Tensor(result)
+
 
 def tensor_sum(arr, **kwargs):
     result = np.sum(arr.data, **kwargs)
     return Tensor(result)
 
+
 def tensor_mean(arr, **kwargs):
     result = np.mean(arr.data, **kwargs)
     return Tensor(result)
+
 
 def tensor_sqrt(arr, **kwargs):
     result = np.sqrt(arr.data, **kwargs)
@@ -80,7 +95,7 @@ class Tensor(NDArrayOperatorsMixin):
     """
 
     def __init__(self, data, requires_grad=False, **kwargs) -> None:
-        self.data = np.array(data, **kwargs) # always copies data
+        self.data = np.array(data, **kwargs)  # always copies data
         self.grad: Optional[Tensor] = None
         self.grad_fn: Optional[FunctionType] = None
         self._backwards = lambda: None
@@ -116,15 +131,13 @@ class Tensor(NDArrayOperatorsMixin):
     def __setitem__(self, key, value):
         """Set array values using standard NumPy-style indexing."""
         if isinstance(value, Tensor):
-           value = value.data 
+            value = value.data
         self.data[key] = value
 
     # for np.asarray(...)
     def __array__(self, dtype=None, copy=None):
         if copy is False:
-            raise ValueError(
-                "`copy=False` isn't supported. A copy is always created."
-            )
+            raise ValueError("`copy=False` isn't supported. A copy is always created.")
         if dtype:
             return self.data.astype(dtype)
         else:
@@ -140,10 +153,9 @@ class Tensor(NDArrayOperatorsMixin):
         unwrapped = [unwrap(input) for input in inputs]
 
         # Properly handle in-place operations (e.g. +=, -=)
-        if 'out' in kwargs:
-            kwargs['out'] = tuple(
-                o.data if isinstance(o, Tensor) else o
-                for o in kwargs['out']
+        if "out" in kwargs:
+            kwargs["out"] = tuple(
+                o.data if isinstance(o, Tensor) else o for o in kwargs["out"]
             )
         result = getattr(ufunc, method)(*unwrapped, **kwargs)
         if result is None:
@@ -156,13 +168,15 @@ class Tensor(NDArrayOperatorsMixin):
             return x
 
         inputs_t = [convert_to_tensor(input) for input in inputs]
-        result_t = tensor(result) 
+        result_t = tensor(result)
         apply_forward_pass(result_t, inputs_t, None, ufunc=ufunc)
 
         # In-place op (numpy already mutated self.data, return self)
-        if 'out' in kwargs and kwargs['out'][0] is self.data:
+        if "out" in kwargs and kwargs["out"][0] is self.data:
             if result_t.requires_grad:
-                self._version += 1 # if versions are not consistent throw error during backprop
+                self._version += (
+                    1  # if versions are not consistent throw error during backprop
+                )
             return self
 
         return result_t
@@ -194,7 +208,7 @@ class Tensor(NDArrayOperatorsMixin):
 
     def reshape(self, *args, **kwargs):
         """Implementation of np.reshape for motorch.tensor objects."""
-        if len(args) == 1: # Handle tuples
+        if len(args) == 1:  # Handle tuples
             args = args[0]
         return tensor_reshape(self, args, **kwargs)
 
@@ -237,6 +251,7 @@ class Tensor(NDArrayOperatorsMixin):
 
 # --- Standalone Functions --- #
 
+
 def tensor(data, dtype=None, requires_grad=False, **kwargs):
     """Create a new ``Tensor`` from array-like data.
 
@@ -247,15 +262,17 @@ def tensor(data, dtype=None, requires_grad=False, **kwargs):
     """
     return Tensor(data, dtype=dtype, requires_grad=requires_grad, **kwargs)
 
+
 def tensor_ones(shape, **kwargs):
     """Create a ``Tensor`` filled with ones."""
     return Tensor(np.ones(shape, **kwargs))
+
 
 def tensor_zeros(shape, **kwargs):
     """Create a ``Tensor`` filled with zeros."""
     return Tensor(np.zeros(shape, **kwargs))
 
+
 def tensor_empty(shape, **kwargs):
     """Create an uninitialized ``Tensor`` of the given shape."""
     return Tensor(np.empty(shape, **kwargs))
-

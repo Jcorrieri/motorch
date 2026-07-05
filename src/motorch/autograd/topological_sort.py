@@ -11,7 +11,7 @@ def topological_sort(root):
 
     add_node(stack, root)
     while stack:
-        node = stack.pop() 
+        node = stack.pop()
         while processing[-1] is not node:
             sorted.append(processing.pop())
 
@@ -22,4 +22,3 @@ def topological_sort(root):
     sorted.extend(processing[::-1])
 
     return sorted[::-1]
-

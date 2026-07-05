@@ -4,6 +4,7 @@ from motorch import Tensor, tensor
 
 # --- Construction --- #
 
+
 class TestConstruction:
     def test_from_list(self):
         t = Tensor([1, 2, 3])
@@ -31,6 +32,7 @@ class TestConstruction:
 
 
 # --- Properties --- #
+
 
 class TestProperties:
     def test_shape(self):
@@ -61,6 +63,7 @@ class TestProperties:
 
 
 # --- Slicing --- #
+
 
 class TestSlicing:
     def test_getitem_index(self):
@@ -96,6 +99,7 @@ class TestSlicing:
 
 # --- Iteration --- #
 
+
 class TestIteration:
     def test_iter(self):
         t = Tensor([1, 2, 3])
@@ -113,6 +117,7 @@ class TestIteration:
 
 
 # --- Arithmetic (ufuncs) --- #
+
 
 class TestArithmetic:
     def test_add(self):
@@ -146,6 +151,7 @@ class TestArithmetic:
 
 
 # --- Instance methods --- #
+
 
 class TestMethods:
     def test_sum_method(self):
@@ -220,6 +226,7 @@ class TestMethods:
 
 # --- Transpose --- #
 
+
 class TestTranspose:
     def test_transpose_2d(self):
         t = Tensor([[1, 2, 3], [4, 5, 6]])
@@ -246,6 +253,7 @@ class TestTranspose:
 
 
 # --- In-place operations --- #
+
 
 class TestInPlace:
     def test_iadd_scalar(self):
@@ -290,6 +298,7 @@ class TestInPlace:
 
 # --- Broadcasting --- #
 
+
 class TestBroadcasting:
     def test_add_scalar(self):
         t = Tensor([1.0, 2.0, 3.0])
@@ -325,78 +334,85 @@ class TestBroadcasting:
 
 
 # --- Reshape --- #
- 
+
+
 class TestReshape:
     def test_reshape_method_basic(self):
         t = Tensor([1, 2, 3, 4, 5, 6])
         result = t.reshape((2, 3))
         assert result.shape == (2, 3)
- 
+
     def test_reshape_method_returns_tensor(self):
         t = Tensor([1, 2, 3, 4])
         assert isinstance(t.reshape((2, 2)), Tensor)
- 
+
     def test_reshape_method_preserves_data(self):
         t = Tensor([1, 2, 3, 4, 5, 6])
         result = t.reshape((2, 3))
         np.testing.assert_array_equal(result.data, np.array([[1, 2, 3], [4, 5, 6]]))
- 
+
     def test_reshape_method_to_1d(self):
         t = Tensor([[1, 2], [3, 4]])
         result = t.reshape((4,))
         np.testing.assert_array_equal(result.data, np.array([1, 2, 3, 4]))
- 
+
     def test_reshape_method_inferred_dim(self):
         t = Tensor([1, 2, 3, 4, 5, 6])
         result = t.reshape((2, -1))
         assert result.shape == (2, 3)
- 
+
     def test_reshape_method_3d(self):
         t = Tensor(np.arange(24))
         result = t.reshape((2, 3, 4))
         assert result.shape == (2, 3, 4)
- 
+
     def test_reshape_method_same_shape(self):
         t = Tensor([[1, 2], [3, 4]])
         result = t.reshape((2, 2))
         np.testing.assert_array_equal(result.data, t.data)
- 
+
     def test_reshape_method_preserves_dtype(self):
         t = Tensor(np.array([1, 2, 3, 4], dtype=np.float32))
         result = t.reshape((2, 2))
         assert result.dtype == np.float32
- 
+
     def test_module_reshape_basic(self):
         import motorch
+
         t = Tensor([1, 2, 3, 4, 5, 6])
         result = motorch.reshape(t, (2, 3))
         assert result.shape == (2, 3)
- 
+
     def test_module_reshape_returns_tensor(self):
         import motorch
+
         t = Tensor([1, 2, 3, 4])
         assert isinstance(motorch.reshape(t, (2, 2)), Tensor)
- 
+
     def test_module_reshape_preserves_data(self):
         import motorch
+
         t = Tensor([1, 2, 3, 4, 5, 6])
         result = motorch.reshape(t, (2, 3))
         np.testing.assert_array_equal(result.data, np.array([[1, 2, 3], [4, 5, 6]]))
- 
+
     def test_module_reshape_inferred_dim(self):
         import motorch
+
         t = Tensor([1, 2, 3, 4, 5, 6])
         result = motorch.reshape(t, (3, -1))
         assert result.shape == (3, 2)
- 
+
     def test_module_reshape_3d(self):
         import motorch
+
         t = Tensor(np.arange(24))
         result = motorch.reshape(t, (2, 3, 4))
         assert result.shape == (2, 3, 4)
- 
+
     def test_method_and_module_consistent(self):
         import motorch
+
         t = Tensor([1, 2, 3, 4, 5, 6])
         np.testing.assert_array_equal(
             t.reshape((2, 3)).data,
@@ -405,6 +421,7 @@ class TestReshape:
 
 
 # --- .numpy() method --- #
+
 
 class TestNumpy:
     def test_numpy_returns_ndarray(self):
@@ -423,4 +440,3 @@ class TestNumpy:
         t = Tensor([[1, 2], [3, 4]])
         arr = t.numpy()
         np.testing.assert_array_equal(arr, np.array([[1, 2], [3, 4]]))
-

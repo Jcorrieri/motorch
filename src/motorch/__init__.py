@@ -26,7 +26,7 @@ from .tensor import (
     tensor_transpose as transpose,
     tensor_reshape as reshape,
     tensor_where as where,
-    tensor_clip as clip
+    tensor_clip as clip,
 )
 
 __all__ = [
@@ -50,5 +50,5 @@ __all__ = [
     "transpose",
     "reshape",
     "where",
-    "clip"
+    "clip",
 ]

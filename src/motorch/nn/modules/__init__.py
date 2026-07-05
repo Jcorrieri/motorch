@@ -6,17 +6,6 @@ https://github.com/pytorch/pytorch/blob/v2.11.0/torch/nn/modules
 from .module import Module
 from .linear import Linear
 from .loss import LogisticLoss
-from .activations import (
-    Sgn,
-    Sigmoid,
-    AltSigmoid
-)
+from .activations import Sgn, Sigmoid, AltSigmoid
 
-__all__ = [
-    "Module",
-    "Linear",
-    "LogisticLoss",
-    "Sgn",
-    "Sigmoid",
-    "AltSigmoid"
-]
+__all__ = ["Module", "Linear", "LogisticLoss", "Sgn", "Sigmoid", "AltSigmoid"]

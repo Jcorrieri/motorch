@@ -2,6 +2,7 @@
 Serves the same purpose as torch's no_grad() context manager
 """
 
+
 class no_grad:
     _grad_enabled = True
 

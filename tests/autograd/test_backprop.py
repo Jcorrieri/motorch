@@ -8,6 +8,7 @@ from motorch import zeros_like
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 
+
 def numerical_grad(f, x, eps=1e-5):
     """Central finite-difference gradient estimate for a scalar-output function."""
     return (f(x + eps) - f(x - eps)) / (2 * eps)
@@ -17,14 +18,15 @@ def assert_grad_close(actual, expected, rtol=1e-4, atol=1e-6):
     np.testing.assert_allclose(
         actual.data if isinstance(actual, Tensor) else actual,
         expected.data if isinstance(expected, Tensor) else expected,
-        rtol=rtol, atol=atol,
+        rtol=rtol,
+        atol=atol,
     )
 
 
 # ── DAG node creation ─────────────────────────────────────────────────────────
 
-class TestNodeCreation:
 
+class TestNodeCreation:
     def test_children_exist_when_left_requires_grad(self):
         a = Tensor([1.0, 2.0], requires_grad=True)
         b = Tensor([3.0, 4.0], requires_grad=False)
@@ -88,8 +90,8 @@ class TestNodeCreation:
 
 # ── version tracking ──────────────────────────────────────────────────────────
 
-class TestVersionTracking:
 
+class TestVersionTracking:
     def test_version_increments_on_inplace(self):
         a = Tensor([1.0, 2.0], requires_grad=True)
         v = a._version
@@ -119,17 +121,17 @@ class TestVersionTracking:
     def test_inplace_raises_on_stale_version(self):
         x = tensor(2.0, requires_grad=True)
         y = tensor(3.0, requires_grad=True)
-        z = x + y          # z captures x at version 0
-        x += 1.0           # x mutated → version bumps
+        z = x + y  # z captures x at version 0
+        x += 1.0  # x mutated → version bumps
         z.grad = tensor(1.0)
         with pytest.raises(ValueError):
-            z.grad_fn()    # should raise due to version mismatch
+            z.grad_fn()  # should raise due to version mismatch
 
 
 # ── single-op gradients ───────────────────────────────────────────────────────
 
-class TestSingleOpGradients:
 
+class TestSingleOpGradients:
     # addition
 
     def test_add_grad_left(self):
@@ -170,14 +172,14 @@ class TestSingleOpGradients:
         y = tensor(5.0)
         z = x * y
         z.backward()
-        assert_grad_close(x.grad, 5.0)   # dz/dx = y
+        assert_grad_close(x.grad, 5.0)  # dz/dx = y
 
     def test_mul_grad_right(self):
         x = tensor(2.0)
         y = tensor(5.0, requires_grad=True)
         z = x * y
         z.backward()
-        assert_grad_close(y.grad, 2.0)   # dz/dy = x
+        assert_grad_close(y.grad, 2.0)  # dz/dy = x
 
     def test_mul_grad_scales_with_upstream(self):
         x = tensor(2.0, requires_grad=True)
@@ -186,7 +188,7 @@ class TestSingleOpGradients:
         z.grad = tensor(3.0)
         z.grad_fn()
         assert_grad_close(x.grad, 15.0)  # y * upstream
-        assert_grad_close(y.grad, 6.0)   # x * upstream
+        assert_grad_close(y.grad, 6.0)  # x * upstream
 
     # subtraction
 
@@ -195,7 +197,7 @@ class TestSingleOpGradients:
         y = tensor(1.0, requires_grad=True)
         z = x - y
         z.backward()
-        assert_grad_close(x.grad,  1.0)
+        assert_grad_close(x.grad, 1.0)
         assert_grad_close(y.grad, -1.0)
 
     # division
@@ -205,8 +207,8 @@ class TestSingleOpGradients:
         y = tensor(2.0, requires_grad=True)
         z = x / y
         z.backward()
-        assert_grad_close(x.grad,  0.5)       # 1/y
-        assert_grad_close(y.grad, -1.5)       # -x/y²
+        assert_grad_close(x.grad, 0.5)  # 1/y
+        assert_grad_close(y.grad, -1.5)  # -x/y²
 
     # matmul NOTE: Not yet implemented!
 
@@ -221,8 +223,8 @@ class TestSingleOpGradients:
 
 # ── chained / multi-op gradients ─────────────────────────────────────────────
 
-class TestChainedGradients:
 
+class TestChainedGradients:
     def test_add_chain(self):
         # w = (x + y) + v; dw/dx = dw/dy = dw/dv = 1
         x = tensor(1.0, requires_grad=True)
@@ -242,8 +244,8 @@ class TestChainedGradients:
         w = (x * y) * v
         w.backward()
         assert_grad_close(x.grad, 12.0)  # y * v
-        assert_grad_close(y.grad, 8.0)   # x * v
-        assert_grad_close(v.grad, 6.0)   # x * y
+        assert_grad_close(y.grad, 8.0)  # x * v
+        assert_grad_close(v.grad, 6.0)  # x * y
 
     def test_mul_then_add(self):
         # w = x*y + v; dw/dx = y, dw/dy = x, dw/dv = 1
@@ -277,13 +279,14 @@ class TestChainedGradients:
     def test_diamond_graph(self):
         # y = x + x, z = y * x; dz/dx = 2x² — tests grad accumulation through fan-out
         x = tensor(2.0, requires_grad=True)
-        y = x + x          
-        z = y * x          
-        z.backward()       # z = y * x = (x + x) * x = 2x * x = 2x^2 ⇒ dz/dx = 4x = 8
+        y = x + x
+        z = y * x
+        z.backward()  # z = y * x = (x + x) * x = 2x * x = 2x^2 ⇒ dz/dx = 4x = 8
         assert_grad_close(x.grad, 8.0)
 
 
 # ── numerical gradient checks ─────────────────────────────────────────────────
+
 
 class TestNumericalGradients:
     """Compare analytical gradients against finite differences."""
@@ -293,7 +296,9 @@ class TestNumericalGradients:
         y = f(x)
         y.backward()
         analytical = float(x.grad.data) if x.grad is not None else zeros_like(x)
-        numerical  = float(numerical_grad(lambda v: f(tensor(float(v))).data, x_val, eps))
+        numerical = float(
+            numerical_grad(lambda v: f(tensor(float(v))).data, x_val, eps)
+        )
         np.testing.assert_allclose(analytical, numerical, rtol=1e-3, atol=1e-6)
 
     def test_add_numerical(self):
@@ -314,8 +319,8 @@ class TestNumericalGradients:
 
 # ── backward cleanup ──────────────────────────────────────────────────────────
 
-class TestBackwardCleanup:
 
+class TestBackwardCleanup:
     def test_children_cleared_after_backward(self):
         x = tensor(2.0, requires_grad=True)
         y = tensor(3.0, requires_grad=True)

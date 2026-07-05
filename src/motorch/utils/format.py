@@ -1,5 +1,6 @@
 """Formatting utilities used by module representations."""
 
+
 def _addindent(s_, numSpaces):
     """Indent the body of a multi-line string by a fixed number of spaces."""
     s = s_.split("\n")

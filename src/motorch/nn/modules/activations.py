@@ -2,7 +2,7 @@
 
 from motorch.autograd.forward import apply_forward_pass
 from .module import Module
-from motorch.utils import no_grad 
+from motorch.utils import no_grad
 from motorch.tensor import tensor
 import motorch as mo
 import motorch.nn.functional as F
@@ -53,5 +53,3 @@ class AltSigmoid(Module):
         with no_grad():
             out = 2 * F.sigmoid_grad(x)
         return out
-
-

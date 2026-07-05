@@ -7,14 +7,17 @@ from motorch.nn.modules import Module
 
 # --- Concrete subclasses for testing --- #
 
+
 class SimpleModule(Module):
     """Minimal module with a forward pass"""
+
     def forward(self, x):
         return x
 
 
 class LinearModule(Module):
     """Module with parameters, simulating a linear layer"""
+
     def __init__(self, in_features, out_features):
         super().__init__()
         self.weight = Parameter(Tensor(np.random.randn(out_features, in_features)))
@@ -26,6 +29,7 @@ class LinearModule(Module):
 
 class NestedModule(Module):
     """Module with child submodules"""
+
     def __init__(self):
         super().__init__()
         self.layer1 = LinearModule(4, 8)
@@ -37,11 +41,13 @@ class NestedModule(Module):
 
 class ActivationModule(Module):
     """Parameter-free module"""
+
     def forward(self, x):
         return Tensor(np.maximum(x.data, 0))
 
 
 # --- Initialization --- #
+
 
 class TestInit:
     def test_training_default_true(self):
@@ -66,33 +72,34 @@ class TestInit:
 
 # --- __setattr__ --- #
 
+
 class TestSetAttr:
     def test_parameter_goes_to_parameters_dict(self):
         m = SimpleModule()
         p = Parameter(Tensor([1.0, 2.0]))
         m.weight = p
-        assert "weight" in m._parameters # type: ignore[reportOperatorIssue]
-        assert m._parameters["weight"] is p # type: ignore[reportIndexIssue]
+        assert "weight" in m._parameters  # type: ignore[reportOperatorIssue]
+        assert m._parameters["weight"] is p  # type: ignore[reportIndexIssue]
 
     def test_module_goes_to_modules_dict(self):
         m = SimpleModule()
         child = SimpleModule()
         m.child = child
-        assert "child" in m._modules # type: ignore[reportOperatorIssue]
-        assert m._modules["child"] is child # type: ignore[reportIndexIssue]
+        assert "child" in m._modules  # type: ignore[reportOperatorIssue]
+        assert m._modules["child"] is child  # type: ignore[reportIndexIssue]
 
     def test_plain_attr_goes_to_instance_dict(self):
         m = SimpleModule()
         m.learning_rate = 0.01
         assert m.__dict__["learning_rate"] == 0.01
-        assert "learning_rate" not in m._parameters # type: ignore[reportOperatorIssue]
-        assert "learning_rate" not in m._modules # type: ignore[reportOperatorIssue]
+        assert "learning_rate" not in m._parameters  # type: ignore[reportOperatorIssue]
+        assert "learning_rate" not in m._modules  # type: ignore[reportOperatorIssue]
 
     def test_tensor_goes_to_instance_dict(self):
         """Plain Tensors (non-Parameter) should not go to _parameters"""
         m = SimpleModule()
         m.cache = Tensor([1.0, 2.0])
-        assert "cache" not in m._parameters # type: ignore[reportOperatorIssue]
+        assert "cache" not in m._parameters  # type: ignore[reportOperatorIssue]
         assert "cache" in m.__dict__
 
     def test_parameter_not_in_instance_dict(self):
@@ -107,6 +114,7 @@ class TestSetAttr:
 
 
 # --- __getattr__ --- #
+
 
 class TestGetAttr:
     def test_get_parameter(self):
@@ -135,6 +143,7 @@ class TestGetAttr:
 
 # --- parameters() --- #
 
+
 class TestParameters:
     def test_yields_own_parameters(self):
         m = LinearModule(2, 3)
@@ -153,7 +162,9 @@ class TestParameters:
     def test_recursive_parameters(self):
         m = NestedModule()
         params = list(m.parameters())
-        assert len(params) == 4  # layer1.weight, layer1.bias, layer2.weight, layer2.bias
+        assert (
+            len(params) == 4
+        )  # layer1.weight, layer1.bias, layer2.weight, layer2.bias
 
     def test_non_recursive_parameters(self):
         m = NestedModule()
@@ -163,6 +174,7 @@ class TestParameters:
     def test_parameters_is_generator(self):
         m = LinearModule(2, 3)
         import types
+
         assert isinstance(m.parameters(), types.GeneratorType)
 
     def test_parameters_correct_shapes(self):
@@ -170,10 +182,11 @@ class TestParameters:
         params = list(m.parameters())
         shapes = {p.shape for p in params}
         assert (3, 2) in shapes  # weight shape
-        assert (3,) in shapes    # bias shape
+        assert (3,) in shapes  # bias shape
 
 
 # --- train() / eval() --- #
+
 
 class TestTrainEval:
     def test_default_training_true(self):
@@ -225,6 +238,7 @@ class TestTrainEval:
 
 # --- forward() / __call__ --- #
 
+
 class TestForward:
     def test_forward_not_implemented(self):
         m = Module()
@@ -258,11 +272,12 @@ class TestForward:
 
 # --- __# --- Composition --- #
 
+
 class TestComposition:
     def test_nested_modules_registered(self):
         m = NestedModule()
-        assert "layer1" in m._modules # type: ignore[reportOperatorIssue]
-        assert "layer2" in m._modules # type: ignore[reportOperatorIssue]
+        assert "layer1" in m._modules  # type: ignore[reportOperatorIssue]
+        assert "layer2" in m._modules  # type: ignore[reportOperatorIssue]
 
     def test_nested_module_accessible(self):
         m = NestedModule()
@@ -275,6 +290,7 @@ class TestComposition:
                 super().__init__()
                 self.linear = LinearModule(2, 2)
                 self.relu = ActivationModule()
+
             def forward(self, x):
                 return self.relu(self.linear(x))
 
@@ -288,7 +304,9 @@ class TestComposition:
                 super().__init__()
                 self.a = NestedModule()  # contains 4 params
                 self.b = LinearModule(2, 2)  # contains 2 params
-            def forward(self, x): pass
+
+            def forward(self, x):
+                pass
 
         m = Deep()
         assert len(list(m.parameters())) == 6

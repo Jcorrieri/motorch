@@ -9,6 +9,7 @@ from motorch.autograd.forward import apply_forward_pass
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
+
 def make_output(val=0.0):
     """Create a plain output tensor with no graph attached."""
     return tensor(val)
@@ -18,14 +19,15 @@ def assert_grad_close(actual, expected, rtol=1e-5, atol=1e-8):
     np.testing.assert_allclose(
         actual.data if isinstance(actual, Tensor) else np.array(actual),
         expected.data if isinstance(expected, Tensor) else np.array(expected),
-        rtol=rtol, atol=atol,
+        rtol=rtol,
+        atol=atol,
     )
 
 
 # ── input validation ──────────────────────────────────────────────────────────
 
-class TestInputValidation:
 
+class TestInputValidation:
     def test_inputs_not_sequence_raises(self):
         z = make_output()
         x = tensor(1.0, requires_grad=True)
@@ -63,8 +65,8 @@ class TestInputValidation:
 
 # ── graph construction ────────────────────────────────────────────────────────
 
-class TestGraphConstruction:
 
+class TestGraphConstruction:
     def test_requires_grad_set_on_output(self):
         z = make_output()
         x = tensor(1.0, requires_grad=True)
@@ -104,8 +106,8 @@ class TestGraphConstruction:
 
 # ── gradient computation ──────────────────────────────────────────────────────
 
-class TestGradientComputation:
 
+class TestGradientComputation:
     def test_single_input_grad_initialized(self):
         # x.grad starts as None — should be set to total_grad
         z = make_output(1.0)
@@ -172,8 +174,8 @@ class TestGradientComputation:
 
 # ── in-place mutation detection ───────────────────────────────────────────────
 
-class TestInplaceMutationDetection:
 
+class TestInplaceMutationDetection:
     def test_inplace_mutation_raises(self):
         z = make_output(1.0)
         x = tensor(2.0, requires_grad=True)
@@ -204,10 +206,11 @@ class TestInplaceMutationDetection:
 
 # ── ufunc path ────────────────────────────────────────────────────────────────
 
-class TestUfuncPath:
 
+class TestUfuncPath:
     def test_ufunc_overrides_local_grads(self):
         import numpy as np
+
         x = tensor(2.0, requires_grad=True)
         y = tensor(3.0, requires_grad=True)
         z = tensor(5.0)
@@ -221,6 +224,7 @@ class TestUfuncPath:
 
     def test_ufunc_mul_grads(self):
         import numpy as np
+
         x = tensor(2.0, requires_grad=True)
         y = tensor(3.0, requires_grad=True)
         z = tensor(6.0)

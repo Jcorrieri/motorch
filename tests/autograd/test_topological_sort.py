@@ -7,6 +7,7 @@ from motorch.tensor import tensor
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
+
 def is_valid_topological_order(nodes):
     """
     Verify that every parent appears before all of its children in the sorted list.
@@ -27,8 +28,8 @@ def is_valid_topological_order(nodes):
 
 # ── single node ───────────────────────────────────────────────────────────────
 
-class TestSingleNode:
 
+class TestSingleNode:
     def test_single_node_returned(self):
         x = tensor(1.0, requires_grad=True)
         result = topological_sort(x)
@@ -43,8 +44,8 @@ class TestSingleNode:
 
 # ── linear chains ─────────────────────────────────────────────────────────────
 
-class TestLinearChain:
 
+class TestLinearChain:
     def test_two_node_chain_length(self):
         x = tensor(2.0, requires_grad=True)
         y = tensor(3.0)
@@ -99,15 +100,15 @@ class TestLinearChain:
 
 # ── diamond / fan-out-fan-in ──────────────────────────────────────────────────
 
-class TestDiamondGraph:
 
+class TestDiamondGraph:
     def test_diamond_order(self):
         # x feeds into both y and z, which both feed into w
         # w = (x + a) + (x + b)
         x = tensor(2.0, requires_grad=True)
         a = tensor(1.0, requires_grad=True)
         b = tensor(3.0, requires_grad=True)
-        left  = x + a
+        left = x + a
         right = x + b
         w = left + right
         result = topological_sort(w)
@@ -118,7 +119,7 @@ class TestDiamondGraph:
         x = tensor(2.0, requires_grad=True)
         a = tensor(1.0, requires_grad=True)
         b = tensor(3.0, requires_grad=True)
-        left  = x + a
+        left = x + a
         right = x + b
         w = left + right
         result = topological_sort(w)
@@ -137,7 +138,7 @@ class TestDiamondGraph:
         x = tensor(2.0, requires_grad=True)
         a = tensor(1.0, requires_grad=True)
         b = tensor(3.0, requires_grad=True)
-        left  = x + a
+        left = x + a
         right = x + b
         w = left + right
         result = topological_sort(w)
@@ -146,8 +147,8 @@ class TestDiamondGraph:
 
 # ── all nodes present ─────────────────────────────────────────────────────────
 
-class TestAllNodesPresent:
 
+class TestAllNodesPresent:
     def test_all_nodes_in_chain(self):
         x = tensor(1.0, requires_grad=True)
         y = tensor(2.0, requires_grad=True)
@@ -183,8 +184,8 @@ class TestAllNodesPresent:
 
 # ── no-grad leaves ────────────────────────────────────────────────────────────
 
-class TestNoGradLeaves:
 
+class TestNoGradLeaves:
     def test_no_grad_leaf_included(self):
         # leaf tensors without requires_grad are still nodes in the graph
         x = tensor(2.0, requires_grad=True)
@@ -204,6 +205,7 @@ class TestNoGradLeaves:
 
 
 # ── real backward integration ─────────────────────────────────────────────────
+
 
 class TestBackwardIntegration:
     """Verify that the sort order produces correct gradients end-to-end."""

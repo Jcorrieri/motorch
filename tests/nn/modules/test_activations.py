@@ -8,24 +8,27 @@ from motorch.nn.modules.activations import Sgn, Sigmoid, AltSigmoid
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
+
 def assert_close(actual, expected, rtol=1e-5, atol=1e-7):
     np.testing.assert_allclose(
         actual.data if isinstance(actual, Tensor) else np.array(actual),
         expected if isinstance(expected, np.ndarray) else np.array(expected),
-        rtol=rtol, atol=atol,
+        rtol=rtol,
+        atol=atol,
     )
+
 
 def numerical_grad(module, x_val, eps=1e-5):
     """Central finite difference gradient estimate for a scalar module."""
-    out_plus  = float(module(tensor(float(x_val + eps))).data)
+    out_plus = float(module(tensor(float(x_val + eps))).data)
     out_minus = float(module(tensor(float(x_val - eps))).data)
     return (out_plus - out_minus) / (2 * eps)
 
 
 # ── Sgn ───────────────────────────────────────────────────────────────────────
 
-class TestSgn:
 
+class TestSgn:
     def setup_method(self):
         self.sgn = Sgn()
 
@@ -62,8 +65,8 @@ class TestSgn:
 
 # ── Sigmoid ───────────────────────────────────────────────────────────────────
 
-class TestSigmoid:
 
+class TestSigmoid:
     def setup_method(self):
         self.sigmoid = Sigmoid()
 
@@ -133,9 +136,10 @@ class TestSigmoid:
             x = tensor(x_val, requires_grad=True)
             self.sigmoid(x).backward()
             analytical = float(x.grad.item()) if x.grad is not None else 0.0
-            numerical  = numerical_grad(self.sigmoid, x_val)
-            assert analytical == pytest.approx(numerical, rel=1e-4), \
+            numerical = numerical_grad(self.sigmoid, x_val)
+            assert analytical == pytest.approx(numerical, rel=1e-4), (
                 f"Grad mismatch at x={x_val}: analytical={analytical}, numerical={numerical}"
+            )
 
     def test_grad_does_not_accumulate_across_calls(self):
         x = tensor(1.0, requires_grad=True)
@@ -151,8 +155,8 @@ class TestSigmoid:
 
 # ── AltSigmoid ────────────────────────────────────────────────────────────────
 
-class TestAltSigmoid:
 
+class TestAltSigmoid:
     def setup_method(self):
         self.altsig = AltSigmoid()
 
@@ -176,12 +180,12 @@ class TestAltSigmoid:
         x = tensor([-10.0, -1.0, 0.0, 1.0, 10.0])
         out = self.altsig(x)
         assert np.all(out.data > -1.0)
-        assert np.all(out.data <  1.0)
+        assert np.all(out.data < 1.0)
 
     def test_antisymmetry(self):
         # AltSigmoid is antisymmetric: f(-x) = -f(x)
         x_val = 1.5
-        pos = float(self.altsig(tensor( x_val)).data)
+        pos = float(self.altsig(tensor(x_val)).data)
         neg = float(self.altsig(tensor(-x_val)).data)
         assert pos == pytest.approx(-neg, rel=1e-6)
 
@@ -238,9 +242,10 @@ class TestAltSigmoid:
             x = tensor(x_val, requires_grad=True)
             self.altsig(x).backward()
             analytical = float(x.grad.item()) if x.grad is not None else 0.0
-            numerical  = numerical_grad(self.altsig, x_val)
-            assert analytical == pytest.approx(numerical, rel=1e-4), \
+            numerical = numerical_grad(self.altsig, x_val)
+            assert analytical == pytest.approx(numerical, rel=1e-4), (
                 f"Grad mismatch at x={x_val}: analytical={analytical}, numerical={numerical}"
+            )
 
     def test_grad_double_sigmoid_grad(self):
         # AltSigmoid grad should be exactly 2x Sigmoid grad
