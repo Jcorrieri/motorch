@@ -19,7 +19,7 @@ jobs:
     steps:
     - uses: actions/checkout@v7
 
-    - name: Set up Python # faster as it uses cached Python versions
+    - name: Set up Python # faster as it uses cached Python version
       uses: actions/setup-python@v6
       with:
         python-version-file: ".python-version"
