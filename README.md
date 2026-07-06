@@ -53,7 +53,7 @@ for epoch in range(num_epochs):
 MoTorch follows the PyTorch module pattern. Models are defined by subclassing nn.Module and implementing forward:
 
 ```python
-class AltSigmoidMLP(nn.Module):
+class MLP(nn.Module):
     def __init__(self):
         super().__init__()
         self.layer1 = nn.Linear(2, 3)
