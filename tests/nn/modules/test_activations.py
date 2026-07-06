@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+import motorch.nn as nn
 from motorch.tensor import tensor, Tensor
 from motorch.nn.modules.activations import Sgn, Sigmoid, AltSigmoid
 
@@ -269,4 +270,66 @@ class TestAltSigmoid:
         x.grad = None
         self.altsig(x).backward()
         grad_after_second = float(x.grad.item()) if x.grad is not None else 0.0
+        assert grad_after_first == pytest.approx(grad_after_second, rel=1e-6)
+
+
+# ── ReLU ──────────────────────────────────────────────────────────────────────
+
+
+class TestReLU:
+    def setup_method(self):
+        self.relu = nn.ReLU()
+
+    def test_zero_input(self):
+        assert_close(self.relu(tensor(0.0)), 0.0)
+
+    def test_positive_input(self):
+        assert_close(self.relu(tensor(2.5)), 2.5)
+
+    def test_negative_input(self):
+        assert_close(self.relu(tensor(-2.5)), 0.0)
+
+    def test_vector_input(self):
+        out = self.relu(tensor([-2.0, -0.5, 0.0, 0.5, 2.0]))
+        assert_close(out, [0.0, 0.0, 0.0, 0.5, 2.0])
+
+    def test_matrix_input(self):
+        out = self.relu(tensor([[-1.0, 2.0], [0.0, -3.0]]))
+        assert_close(out, [[0.0, 2.0], [0.0, 0.0]])
+
+    def test_returns_tensor(self):
+        assert isinstance(self.relu(tensor(1.0)), Tensor)
+
+    def test_grad_positive_input(self):
+        z = tensor(2.5, requires_grad=True)
+        self.relu(z).backward()
+        assert_close(z.grad, 1.0)
+
+    def test_grad_negative_input(self):
+        z = tensor(-2.5, requires_grad=True)
+        self.relu(z).backward()
+        assert_close(z.grad, 0.0)
+
+    def test_grad_zero_input(self):
+        z = tensor(0.0, requires_grad=True)
+        self.relu(z).backward()
+        assert_close(z.grad, 0.0)
+
+    def test_grad_vector_input(self):
+        z = tensor([-2.0, -0.5, 0.0, 0.5, 2.0], requires_grad=True)
+        self.relu(z).backward()
+        assert_close(z.grad, [0.0, 0.0, 0.0, 1.0, 1.0])
+
+    def test_grad_matrix_input(self):
+        z = tensor([[-1.0, 2.0], [0.0, -3.0]], requires_grad=True)
+        self.relu(z).backward()
+        assert_close(z.grad, [[0.0, 1.0], [0.0, 0.0]])
+
+    def test_grad_does_not_accumulate_across_calls(self):
+        z = tensor(2.5, requires_grad=True)
+        self.relu(z).backward()
+        grad_after_first = float(z.grad.item()) if z.grad is not None else 0.0
+        z.grad = None
+        self.relu(z).backward()
+        grad_after_second = float(z.grad.item()) if z.grad is not None else 0.0
         assert grad_after_first == pytest.approx(grad_after_second, rel=1e-6)

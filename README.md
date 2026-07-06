@@ -15,7 +15,7 @@ x = mo.tensor([[0.1, 0.2], [0.3, 0.4]], requires_grad=True)
 y = mo.tensor([[1.0], [-1.0]])
 
 model = nn.Linear(in_features=2, out_features=1)
-activation = nn.AltSigmoid()
+activation = nn.ReLU()
 criterion = nn.LogisticLoss()
 optimizer = optim.SGD(model.parameters(), lr=0.01)
 
@@ -57,7 +57,7 @@ class AltSigmoidMLP(nn.Module):
     def __init__(self):
         super().__init__()
         self.layer1 = nn.Linear(2, 3)
-        self.act1   = nn.AltSigmoid()
+        self.act1   = nn.ReLU()
         self.output = nn.Linear(3, 1)
 
     def forward(self, x):
@@ -71,7 +71,7 @@ model = AltSigmoidMLP()
 Currently available modules (more to come):
 
 - Layers: nn.Linear
-- Activations: nn.Sigmoid, nn.AltSigmoid, nn.Sgn
+- Activations: nn.Sigmoid, nn.AltSigmoid, nn.Sgn, nn.ReLU
 - Loss: nn.LogisticLoss
 - Optimizers: optim.SGD
 

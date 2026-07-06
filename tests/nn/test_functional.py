@@ -114,6 +114,52 @@ class TestSigmoidGrad:
         assert isinstance(F.sigmoid_grad(tensor(0.0)), Tensor)
 
 
+# ── relu ──────────────────────────────────────────────────────────────────────
+
+
+class TestRelu:
+    def test_zero_input(self):
+        assert_close(F.relu(tensor(0.0)), 0.0)
+
+    def test_positive_input(self):
+        assert_close(F.relu(tensor(2.5)), 2.5)
+
+    def test_negative_input(self):
+        assert_close(F.relu(tensor(-2.5)), 0.0)
+
+    def test_vector_input(self):
+        out = F.relu(tensor([-2.0, -0.5, 0.0, 0.5, 2.0]))
+        assert_close(out, [0.0, 0.0, 0.0, 0.5, 2.0])
+
+    def test_matrix_input(self):
+        out = F.relu(tensor([[-1.0, 2.0], [0.0, -3.0]]))
+        assert_close(out, [[0.0, 2.0], [0.0, 0.0]])
+
+    def test_returns_tensor(self):
+        assert isinstance(F.relu(tensor(1.0)), Tensor)
+
+
+# ── relu_grad ─────────────────────────────────────────────────────────────────
+
+
+class TestReluGrad:
+    def test_zero_input(self):
+        assert_close(F.relu_grad(tensor(0.0)), 0.0)
+
+    def test_positive_input(self):
+        assert_close(F.relu_grad(tensor(2.5)), 1.0)
+
+    def test_negative_input(self):
+        assert_close(F.relu_grad(tensor(-2.5)), 0.0)
+
+    def test_vector_input(self):
+        out = F.relu_grad(tensor([-2.0, -0.5, 0.0, 0.5, 2.0]))
+        assert_close(out, [0.0, 0.0, 0.0, 1.0, 1.0])
+
+    def test_returns_tensor(self):
+        assert isinstance(F.relu_grad(tensor(1.0)), Tensor)
+
+
 # ── logloss ───────────────────────────────────────────────────────────────────
 
 
