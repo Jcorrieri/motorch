@@ -10,23 +10,31 @@ from motorch import Tensor
 # --- Activations --- #
 
 
-def sigmoid(x):
+def sigmoid(z):
     """Compute the sigmoid activation for a tensor input."""
-    x_clipped = mo.clip(x, -700, 700)  # to avoid numerical instability
-    return 1 / (1 + mo.exp(-x_clipped))
+    z_clipped = mo.clip(z, -700, 700)  # to avoid numerical instability
+    return 1 / (1 + mo.exp(-z_clipped))
 
 
-def sigmoid_grad(x, precomputed=False):
+def sigmoid_grad(z, precomputed=False):
     """
     Compute the gradient of the sigmoid activation.
 
     args:
-        - x (Tensor): the input data
-        - precomputed (boolean): whether x is the output of sigmoid
+        - z (Tensor): the input data
+        - precomputed (boolean): whether z is the output of sigmoid
     """
     if not precomputed:
-        x = sigmoid(x)
-    return x * (1 - x)
+        z = sigmoid(z)
+    return z * (1 - z)
+
+
+def relu(z):
+    return mo.where(z > 0, z, 0)
+
+
+def relu_grad(z):
+    return mo.where(z > 0, 1, 0)
 
 
 # --- Loss Functions --- #  TODO: Change name to explicit +1/-1 loss.
@@ -45,19 +53,19 @@ def logloss_grad(logits, labels):
 # --- Layers --- #
 
 
-def linear(x, weight, bias):
+def linear(z, weight, bias):
     """Compute a linear transformation with optional bias.
 
     Parameters:
-        x: Input tensor with last dimension matching ``weight.shape[0]``.
+        z: Input tensor with last dimension matching ``weight.shape[0]``.
         weight: Weight tensor of shape ``(in_features, out_features)``.
         bias: Bias tensor added to each row of the result.
     """
-    if not isinstance(x, Tensor):
+    if not isinstance(z, Tensor):
         raise ValueError("Input must be of type motorch.Tensor")
 
-    assert x.shape[-1] == weight.shape[0], (
-        f"Expected x.shape = ({len(x)}, {weight.shape[0]}), got {x.shape}."
+    assert z.shape[-1] == weight.shape[0], (
+        f"Expected z.shape = ({len(z)}, {weight.shape[0]}), got {z.shape}."
     )
 
-    return x @ weight + bias
+    return z @ weight + bias
