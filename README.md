@@ -65,7 +65,7 @@ class MLP(nn.Module):
         x = self.output(x)
         return x
 
-model = AltSigmoidMLP()
+model = MLP()
 ```
 
 Currently available modules (more to come):
