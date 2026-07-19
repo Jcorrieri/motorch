@@ -72,8 +72,9 @@ Currently available modules (more to come):
 
 - Layers: nn.Linear
 - Activations: nn.Sigmoid, nn.AltSigmoid, nn.Sgn, nn.ReLU
-- Loss: nn.LogisticLoss
+- Loss: nn.LogisticLoss, nn.CrossEntropyLoss
 - Optimizers: optim.SGD
+- Data utilities: motorch.data.TensorDataset and motorch.data.DataLoader
 
 ## Examples
 
@@ -81,6 +82,9 @@ The examples/ directory contains working notebooks demonstrating MoTorch for cla
 
 - `examples/binary_classifier.ipynb` - binary classification on a 2D dataset with manual weight initialization,
 Glorot initialization, a full train/validation loop, and decision boundary visualization.
+- `examples/mnist_mlp_classifier.ipynb` - MNIST MLP classifier using standard
+  library dataset download/parsing, `TensorDataset`, `DataLoader`,
+  `CrossEntropyLoss`, and SGD.
 
 ## Development
 
@@ -98,6 +102,11 @@ Run linting & formatting with `Ruff`:
 uv run ruff format --check .
 uv run ruff check .
 ```
+
+## AI Disclosure
+
+This project uses AI-assistance for writing unit tests and editing example notebooks. All core implementations
+are programmed by hand.
 
 ## References
 

@@ -61,28 +61,39 @@ def tensor_clip(a, *args, **kwargs):
 
 
 def tensor_exp(arr, **kwargs):
-    result = np.exp(arr.data, **kwargs)
-    return Tensor(result)
+    return Tensor(np.exp(arr.data, **kwargs))
 
 
 def tensor_log1p(arr, **kwargs):
-    result = np.log1p(arr.data, **kwargs)
-    return Tensor(result)
+    return Tensor(np.log1p(arr.data, **kwargs))
+
+
+def tensor_log(arr, **kwargs):
+    return Tensor(np.log(arr.data, **kwargs))
 
 
 def tensor_sum(arr, **kwargs):
-    result = np.sum(arr.data, **kwargs)
-    return Tensor(result)
+    return Tensor(np.sum(arr.data, **kwargs))
 
 
 def tensor_mean(arr, **kwargs):
-    result = np.mean(arr.data, **kwargs)
-    return Tensor(result)
+    return Tensor(np.mean(arr.data, **kwargs))
+
+
+def tensor_max(arr, **kwargs):
+    return Tensor(np.max(arr.data, **kwargs))
+
+
+def tensor_argmax(arr, **kwargs):
+    return Tensor(np.argmax(arr.data, **kwargs))
+
+
+def tensor_take_along_axis(arr, indices, **kwargs):
+    return Tensor(np.take_along_axis(arr, indices, **kwargs))
 
 
 def tensor_sqrt(arr, **kwargs):
-    result = np.sqrt(arr.data, **kwargs)
-    return Tensor(result)
+    return Tensor(np.sqrt(arr.data, **kwargs))
 
 
 class Tensor(NDArrayOperatorsMixin):

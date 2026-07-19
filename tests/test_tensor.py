@@ -1,4 +1,5 @@
 import numpy as np
+import motorch as mo
 from motorch import Tensor, tensor
 
 
@@ -196,6 +197,29 @@ class TestMethods:
     def test_log1p(self):
         t = Tensor([0.0])
         np.testing.assert_allclose(t.log1p().data, np.array([0.0]))
+
+    def test_log_function(self):
+        result = mo.log(Tensor([1.0, np.e]))
+        assert isinstance(result, Tensor)
+        np.testing.assert_allclose(result.data, np.array([0.0, 1.0]))
+
+    def test_max_function_with_axis(self):
+        result = mo.max(Tensor([[1, 4], [3, 2]]), axis=0)
+        assert isinstance(result, Tensor)
+        np.testing.assert_array_equal(result.data, np.array([3, 4]))
+
+    def test_argmax_function_with_axis(self):
+        result = mo.argmax(Tensor([[1, 4], [3, 2]]), axis=1)
+        assert isinstance(result, Tensor)
+        np.testing.assert_array_equal(result.data, np.array([1, 0]))
+
+    def test_take_along_axis_function(self):
+        values = Tensor([[1, 4, 2], [3, 2, 5]])
+        indices = Tensor([[1], [2]])
+        result = mo.take_along_axis(values, indices, axis=-1)
+
+        assert isinstance(result, Tensor)
+        np.testing.assert_array_equal(result.data, np.array([[4], [5]]))
 
     def test_clip_basic(self):
         t = Tensor([1, 2, 3, 4, 5])
