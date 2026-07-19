@@ -272,6 +272,124 @@ class TestLoglossGrad:
 # ── linear ────────────────────────────────────────────────────────────────────
 
 
+class TestCrossEntropy:
+    def test_known_value(self):
+        logits = tensor([1.0, 2.0, 3.0])
+        labels = tensor([0.0, 0.0, 1.0])
+        expected = -3.0 + np.log(np.exp([1.0, 2.0, 3.0]).sum())
+
+        assert_close(F.cross_entropy(logits, labels), expected)
+
+    def test_invariant_to_constant_shift(self):
+        logits = tensor([-2.0, 0.5, 1.5])
+        shifted_logits = tensor([998.0, 1000.5, 1001.5])
+        labels = tensor([0.0, 1.0, 0.0])
+
+        loss = F.cross_entropy(logits, labels)
+        shifted_loss = F.cross_entropy(shifted_logits, labels)
+
+        assert_close(shifted_loss, loss.data)
+
+    def test_large_logits_are_finite_and_non_negative(self):
+        logits = tensor([1000.0, 1001.0, 1002.0])
+        labels = tensor([0.0, 0.0, 1.0])
+
+        loss = F.cross_entropy(logits, labels)
+
+        assert np.isfinite(loss.data)
+        assert float(loss.item()) >= 0.0
+
+    def test_returns_tensor(self):
+        result = F.cross_entropy(tensor([1.0, 2.0]), tensor([1.0, 0.0]))
+
+        assert isinstance(result, Tensor)
+
+    def test_2d_returns_mean_loss(self):
+        logits = tensor([[1.0, 2.0, 3.0], [-1.0, 0.0, 2.0]])
+        labels = tensor([[0.0, 0.0, 1.0], [1.0, 0.0, 0.0]])
+        logits_data = logits.data
+        target_indices = np.array([2, 0])
+        losses = (
+            np.log(np.exp(logits_data).sum(axis=-1))
+            - logits_data[np.arange(len(logits_data)), target_indices]
+        )
+
+        result = F.cross_entropy(logits, labels)
+
+        assert result.shape == ()
+        assert_close(result, losses.mean())
+
+    def test_2d_is_invariant_to_per_sample_shifts(self):
+        logits = tensor([[1.0, 2.0, 3.0], [-1.0, 0.0, 2.0]])
+        shifts = np.array([[1000.0], [-1000.0]])
+        labels = tensor([[0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+
+        loss = F.cross_entropy(logits, labels)
+        shifted_loss = F.cross_entropy(tensor(logits.data + shifts), labels)
+
+        assert_close(shifted_loss, loss.data)
+
+
+class TestCrossEntropyGrad:
+    def test_known_value(self):
+        logits = tensor([1.0, 2.0, 3.0])
+        labels = tensor([0.0, 0.0, 1.0])
+        probabilities = np.exp([1.0, 2.0, 3.0])
+        probabilities /= probabilities.sum()
+
+        assert_close(F.cross_entropy_grad(logits, labels), probabilities - labels.data)
+
+    def test_numerical_gradient_matches(self):
+        logits = np.array([-1.0, 0.5, 2.0])
+        labels = tensor([0.0, 1.0, 0.0])
+        epsilon = 1e-5
+        numerical_gradient = np.empty_like(logits)
+
+        for index in range(len(logits)):
+            logits_plus = logits.copy()
+            logits_minus = logits.copy()
+            logits_plus[index] += epsilon
+            logits_minus[index] -= epsilon
+            loss_plus = F.cross_entropy(tensor(logits_plus), labels).item()
+            loss_minus = F.cross_entropy(tensor(logits_minus), labels).item()
+            numerical_gradient[index] = (loss_plus - loss_minus) / (2 * epsilon)
+
+        analytical_gradient = F.cross_entropy_grad(tensor(logits), labels)
+        assert_close(analytical_gradient, numerical_gradient, rtol=1e-4)
+
+    def test_2d_gradient_matches_mean_reduction(self):
+        logits = tensor([[1.0, 2.0, 3.0], [-1.0, 0.0, 2.0]])
+        labels = tensor([[0.0, 0.0, 1.0], [1.0, 0.0, 0.0]])
+        normalized_logits = logits.data - logits.data.max(axis=-1, keepdims=True)
+        probabilities = np.exp(normalized_logits)
+        probabilities /= probabilities.sum(axis=-1, keepdims=True)
+
+        result = F.cross_entropy_grad(logits, labels)
+        expected = (probabilities - labels.data) / len(logits)
+
+        assert result.shape == logits.shape
+        assert_close(result, expected)
+        np.testing.assert_allclose(result.data.sum(axis=-1), np.zeros(2), atol=1e-7)
+
+    def test_2d_numerical_gradient_matches(self):
+        logits = np.array([[1.0, 2.0, 3.0], [-1.0, 0.0, 2.0]])
+        labels = tensor([[0.0, 0.0, 1.0], [1.0, 0.0, 0.0]])
+        epsilon = 1e-5
+        numerical_gradient = np.empty_like(logits)
+
+        for index in np.ndindex(logits.shape):
+            logits_plus = logits.copy()
+            logits_minus = logits.copy()
+            logits_plus[index] += epsilon
+            logits_minus[index] -= epsilon
+            loss_plus = F.cross_entropy(tensor(logits_plus), labels).item()
+            loss_minus = F.cross_entropy(tensor(logits_minus), labels).item()
+            numerical_gradient[index] = (loss_plus - loss_minus) / (2 * epsilon)
+
+        analytical_gradient = F.cross_entropy_grad(tensor(logits), labels)
+        assert_close(analytical_gradient, numerical_gradient, rtol=1e-4)
+
+
 class TestLinear:
     def test_basic_forward(self):
         x = tensor([[1.0, 2.0]])  # (1, 2)

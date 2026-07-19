@@ -74,6 +74,7 @@ Currently available modules (more to come):
 - Activations: nn.Sigmoid, nn.AltSigmoid, nn.Sgn, nn.ReLU
 - Loss: nn.LogisticLoss
 - Optimizers: optim.SGD
+- Data utilities: motorch.data.TensorDataset and motorch.data.DataLoader
 
 ## Examples
 
@@ -81,6 +82,11 @@ The examples/ directory contains working notebooks demonstrating MoTorch for cla
 
 - `examples/binary_classifier.ipynb` - binary classification on a 2D dataset with manual weight initialization,
 Glorot initialization, a full train/validation loop, and decision boundary visualization.
+- `examples/mnist_mlp_classifier.ipynb` - scaffold for a future MNIST MLP classifier.
+  It downloads and parses MNIST with the Python standard library, creates
+  `TensorDataset` and `DataLoader` objects, and defines an MLP skeleton. The
+  criterion and training loop are intentionally pending until a multiclass loss
+  is available.
 
 ## Development
 

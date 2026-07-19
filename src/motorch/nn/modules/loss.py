@@ -13,7 +13,7 @@ class LogisticLoss(Module):
     def forward(self, logits, labels):
         """Compute the logistic loss and cache its gradient."""
         with no_grad():
-            out = F.logloss(labels, logits)
+            out = F.logloss(logits, labels)
 
         result = tensor(out.data)
         local_grads = [self._grad_fn(logits, labels)]
@@ -25,3 +25,23 @@ class LogisticLoss(Module):
         with no_grad():
             x_local_grad = F.logloss_grad(x, y)
         return x_local_grad  # TODO: Return label grads
+
+
+class CrossEntropyLoss(Module):
+    """Cross Entropy loss module"""
+
+    def forward(self, logits, labels):
+        with no_grad():
+            out = F.cross_entropy(logits, labels)
+
+        result = tensor(out.data)
+        local_grads = [self._grad_fn(logits, labels)]
+        apply_forward_pass(result, [logits], local_grads)
+
+        return result
+
+
+    def _grad_fn(self, logits, labels):
+        with no_grad():
+            x_local_grad = F.cross_entropy_grad(logits, labels)
+        return x_local_grad # TODO: return label grads
