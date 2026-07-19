@@ -65,7 +65,7 @@ def cross_entropy(logits, labels):
     Derivation of cross_entropy (NLLLoss)
 
         H(p, q) = -Σplog(q) over all classes c ∈ C
-    
+
         When p = [0, 0, ..., 1, ..., 0], H(p, q) reduces to:
             -p_{c}log(q_{c}), where p_{c} = 1, p_{~c} = 0
             ⇒ -(1.0)log(Softmax(q_{c}))
@@ -76,9 +76,9 @@ def cross_entropy(logits, labels):
     Next, employ the logsumexp trick to stabilize the right term
         - If sum(e^{...}) = 0, then we will have log(0) which is undefined
         - Large z will lead to undefined behavior (although mo.exp() is clamped to [-800, 800])
-    
+
     LogSumExp invovles subtracting each logit by the maximum logit to avoid tricky exponentiation.
-    
+
         log(sum(e^{qj}))
         ⇒ log(sum(e^{qj} * e^{m} * e^{-m})) -- (here, introduce m via e^{m} * e^{-m} = 1)
         ⇒ log(e^{m}sum(e^{qj - m})) -- (move e^{m} out since its constant)

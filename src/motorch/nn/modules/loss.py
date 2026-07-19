@@ -40,8 +40,7 @@ class CrossEntropyLoss(Module):
 
         return result
 
-
     def _grad_fn(self, logits, labels):
         with no_grad():
             x_local_grad = F.cross_entropy_grad(logits, labels)
-        return x_local_grad # TODO: return label grads
+        return x_local_grad  # TODO: return label grads

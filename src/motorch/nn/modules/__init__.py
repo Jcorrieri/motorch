@@ -8,4 +8,13 @@ from .linear import Linear
 from .loss import LogisticLoss, CrossEntropyLoss
 from .activations import Sgn, Sigmoid, AltSigmoid, ReLU
 
-__all__ = ["Module", "Linear", "LogisticLoss", "CrossEntropyLoss", "Sgn", "Sigmoid", "AltSigmoid", "ReLU"]
+__all__ = [
+    "Module",
+    "Linear",
+    "LogisticLoss",
+    "CrossEntropyLoss",
+    "Sgn",
+    "Sigmoid",
+    "AltSigmoid",
+    "ReLU",
+]
