@@ -74,9 +74,7 @@ def test_training_scale_benchmark():
 
             optimizer = SGD(parameters, lr=0.001)
             parameter_count = sum(parameter.data.size for parameter in parameters)
-            storage_bytes = sum(
-                parameter.data.nbytes * 2 for parameter in parameters
-            )
+            storage_bytes = sum(parameter.data.nbytes * 2 for parameter in parameters)
 
             start_time = time.perf_counter()
             for _ in range(steps):
